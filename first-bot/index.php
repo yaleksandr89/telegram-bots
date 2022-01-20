@@ -11,37 +11,42 @@ $client = new GuzzleHttp\Client([
 ]);
 
 try {
-    // >>> getMe
-    $methodGetMe = $client->get('getMe');
-    $contentsGetMe = $methodGetMe->getBody()->getContents();
-    //echo $contentsGetMe->getBody();
-    //dump(json_decode($contentsGetMe, true, 512, JSON_THROW_ON_ERROR));
-    // getMe <<<
+    /** DON'T USE AN INFINITE LOOP ON A REAL SERVER! */
+    while (true) {
+        $params = [];
+        if (isset($lastUpdate)) {
+            $params = [
+                'query' => [
+                    'offset' => $lastUpdate + 1,
+                ],
+            ];
+        }
 
-    // >>> getUpdates
-    $methodGetUpdates = $client->get('getUpdates', [
-        'query' => [
-            'offset' => 111342304,
-        ],
-    ]);
-    $contentsGetUpdates = $methodGetUpdates->getBody()->getContents();
-    //echo $methodGetUpdates->getBody();
-    // getUpdates <<<
+        // >>> getUpdates
+        $methodGetUpdates = $client->get('getUpdates', $params);
+        $contentsGetUpdates = $methodGetUpdates->getBody()->getContents();
+        // getUpdates <<<
 
-    // >>> sendMessage
-    $preparedRequestInfo = json_decode($contentsGetUpdates, true, 512, JSON_THROW_ON_ERROR);
-    foreach ($preparedRequestInfo['result'] as $item) {
-        $responseText = 'Вы написали: [' . $item['message']['text'] . '].';
-        $methodSendMessage = $client->get('sendMessage', [
-            'query' => [
-                'chat_id' => 266222035,
-                'text' => $responseText
-            ],
-        ]);
+        // >>> sendMessage
+        $preparedRequestInfo = json_decode($contentsGetUpdates, true, 512, JSON_THROW_ON_ERROR);
+        if (count($preparedRequestInfo['result']) > 0) {
+            foreach ($preparedRequestInfo['result'] as $key => $item) {
+                echo $item['message']['text'] . "\n";
+                file_put_contents(__DIR__ . '/logs-messages.txt', print_r($preparedRequestInfo['result'][$key], true), FILE_APPEND);
+                $lastUpdate = $item['update_id'];
+                $responseText = 'Вы написали: ' . $item['message']['text'];
+
+                $methodSendMessage = $client->get('sendMessage', [
+                    'query' => [
+                        'chat_id' => 266222035,
+                        'text' => $responseText
+                    ],
+                ]);
+            }
+        }
+        // sendMessage <<<
+        sleep(2);
     }
-    //echo $methodGetUpdates->getBody();
-    // sendMessage <<<
-
 } catch (Throwable $e) {
     dd($e->getMessage());
 }
