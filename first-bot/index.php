@@ -22,16 +22,25 @@ try {
 
     $methodGetUpdates = $client->get('getUpdates', [
         'query' => [
-            'offset' => 111342302,
-            'limit' => 100 // 1 - min, 100 - max
+            'offset' => 111342304,
+            // 'limit' => 100 // 1 - min, 100 - max (default value)
         ],
     ]);
     $contentsGetUpdates = $methodGetUpdates->getBody()->getContents();
     //echo $methodGetUpdates->getBody();
-    dump(json_decode($contentsGetUpdates, true, 512, JSON_THROW_ON_ERROR));
+    $preparedRequestInfo = json_decode($contentsGetUpdates, true, 512, JSON_THROW_ON_ERROR);
 
-} catch (GuzzleException $e) {
-    dd($e->getMessage());
-} catch (JsonException $e) {
+    foreach ($preparedRequestInfo['result'] as $item) {
+        $responseText = 'Вы написали: [' . $item['message']['text'] . '].';
+        $methodSendMessage = $client->get('sendMessage', [
+            'query' => [
+                'chat_id' => 266222035,
+                'text' => $responseText
+            ],
+        ]);
+    }
+    echo $methodGetUpdates->getBody();
+
+} catch (Throwable $e) {
     dd($e->getMessage());
 }
