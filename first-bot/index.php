@@ -13,9 +13,23 @@ $client = new GuzzleHttp\Client([
 ]);
 
 try {
-    $response = $client->get('getMe');
-    $contents = $response->getBody()->getContents();
-    dump(json_decode($contents, true, 512, JSON_THROW_ON_ERROR));
+    /*
+    $methodGetMe = $client->get('getMe');
+    $contentsGetMe = $methodGetMe->getBody()->getContents();
+    //echo $contentsGetMe->getBody();
+    dump(json_decode($contentsGetMe, true, 512, JSON_THROW_ON_ERROR));
+    */
+
+    $methodGetUpdates = $client->get('getUpdates', [
+        'query' => [
+            'offset' => 111342302,
+            'limit' => 100 // 1 - min, 100 - max
+        ],
+    ]);
+    $contentsGetUpdates = $methodGetUpdates->getBody()->getContents();
+    //echo $methodGetUpdates->getBody();
+    dump(json_decode($contentsGetUpdates, true, 512, JSON_THROW_ON_ERROR));
+
 } catch (GuzzleException $e) {
     dd($e->getMessage());
 } catch (JsonException $e) {
