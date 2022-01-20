@@ -1,7 +1,5 @@
 <?php
 
-use GuzzleHttp\Exception\GuzzleException;
-
 if (file_exists('../config.php')) {
     include_once '../config.php';
 } else {
@@ -13,23 +11,25 @@ $client = new GuzzleHttp\Client([
 ]);
 
 try {
-    /*
+    // >>> getMe
     $methodGetMe = $client->get('getMe');
     $contentsGetMe = $methodGetMe->getBody()->getContents();
     //echo $contentsGetMe->getBody();
-    dump(json_decode($contentsGetMe, true, 512, JSON_THROW_ON_ERROR));
-    */
+    //dump(json_decode($contentsGetMe, true, 512, JSON_THROW_ON_ERROR));
+    // getMe <<<
 
+    // >>> getUpdates
     $methodGetUpdates = $client->get('getUpdates', [
         'query' => [
             'offset' => 111342304,
-            // 'limit' => 100 // 1 - min, 100 - max (default value)
         ],
     ]);
     $contentsGetUpdates = $methodGetUpdates->getBody()->getContents();
     //echo $methodGetUpdates->getBody();
-    $preparedRequestInfo = json_decode($contentsGetUpdates, true, 512, JSON_THROW_ON_ERROR);
+    // getUpdates <<<
 
+    // >>> sendMessage
+    $preparedRequestInfo = json_decode($contentsGetUpdates, true, 512, JSON_THROW_ON_ERROR);
     foreach ($preparedRequestInfo['result'] as $item) {
         $responseText = 'Вы написали: [' . $item['message']['text'] . '].';
         $methodSendMessage = $client->get('sendMessage', [
@@ -39,7 +39,8 @@ try {
             ],
         ]);
     }
-    echo $methodGetUpdates->getBody();
+    //echo $methodGetUpdates->getBody();
+    // sendMessage <<<
 
 } catch (Throwable $e) {
     dd($e->getMessage());
