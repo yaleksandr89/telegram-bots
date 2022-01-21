@@ -1,14 +1,15 @@
 <?php
 
+use GuzzleHttp\Client;
+/**
+ * @var Client $client
+ */
+
 if (file_exists('../config.php')) {
     include_once '../config.php';
 } else {
     die('Please, created config file.');
 }
-
-$client = new GuzzleHttp\Client([
-    'base_uri' => 'https://api.telegram.org/bot' . FIRST_BOT_TOKEN . '/'
-]);
 
 try {
     // >>> getMe
