@@ -79,100 +79,105 @@ class TelegramBotApiHelper
         $typeMessage = ($isEditMessage === false) ? $update['message'] : $update['edited_message'];
 
         $chatId = $typeMessage['chat']['id'];
-        $photoCommand = strtolower(trim($typeMessage['text']));
+        $incomingText = strtolower(trim($typeMessage['text']));
 
-        switch ($photoCommand) {
-            // >>> Command
-            case '/photo':
-                $telegram->sendMessage([
-                    'chat_id' => (string)$chatId,
-                    'text' => 'Подбираю изображение...',
-                ]);
-                usleep(500000);
-                $telegram->sendMessage([
-                    'chat_id' => (string)$chatId,
-                    'text' => 'Отправляю изображение...',
-                ]);
-                usleep(500000);
-                $response = $telegram->sendPhoto([
-                    'chat_id' => (string)$chatId,
-                    'photo' => InputFile::create(self::$pathToImages . $randImg),
-                    'caption' => $randImg
-                ]);
-                break;
-            case '/document':
-                $telegram->sendMessage([
-                    'chat_id' => (string)$chatId,
-                    'text' => 'Отправляю файл...',
-                ]);
-                usleep(500000);
-                $response = $telegram->sendDocument([
-                    'chat_id' => (string)$chatId,
-                    'document' => InputFile::create(self::$pathToDocs . $randDocs),
-                    'caption' => $randDocs
-                ]);
-                break;
-            case '/video':
-                $response = $telegram->sendVideo([
-                    'chat_id' => (string)$chatId,
-                    'video' => InputFile::create(self::$pathToVideos . $randVideo),
-                    'caption' => $randVideo
-                ]);
-                break;
-            case '/sticker':
-                $arrStickers = [
-                    'CAACAgIAAxkBAAIBuGHwdjKPYNPl15xsJpJVGsoKjDOVAAIUDwAC1I9gS7jbkdj0UX0_IwQ',
-                    'CAACAgIAAxkBAAIBumHwdjUeAAFgSOUos4_vqFxO54pCEwACaAEAAj0N6ATymcINj4C7YyME',
-                    'CAACAgIAAxkBAAIBvGHwdjmIWqn4oORTUbpQrMt3d2vGAAJJAQACe04qENKK0NXppX3fIwQ',
-                    'CAACAgIAAxkBAAIBvmHwdkCfDsFr75EXtNnbAfHeHq49AAJ8AQACe04qENf3ZOpShYC8IwQ',
-                    'CAACAgIAAxkBAAIBwGHwdkX-LO3oSG0DXi0i2LihHkrXAAJGAANSiZEj-P7l5ArVCh0jBA',
-                    'CAACAgIAAxkBAAIBwmHwdkhabKx3yNFnt_VoaJJtUi4NAAJcAQACPQ3oBAABMsv78bItBCME',
-                ];
+        // Поиск сообщения с содержанием координат, для отправки карты с меткой
+        preg_match('/^(location:)(.+)$/i', $incomingText, $matchesCoordinates);
 
-                $response = $telegram->sendSticker([
+        if ('/photo' === $incomingText) {
+            $telegram->sendMessage([
+                'chat_id' => (string)$chatId,
+                'text' => 'Подбираю изображение...',
+            ]);
+            usleep(500000);
+            $telegram->sendMessage([
+                'chat_id' => (string)$chatId,
+                'text' => 'Отправляю изображение...',
+            ]);
+            usleep(500000);
+            $response = $telegram->sendPhoto([
+                'chat_id' => (string)$chatId,
+                'photo' => InputFile::create(self::$pathToImages . $randImg),
+                'caption' => $randImg
+            ]);
+        } elseif ('/document' === $incomingText) {
+            $telegram->sendMessage([
+                'chat_id' => (string)$chatId,
+                'text' => 'Отправляю файл...',
+            ]);
+            usleep(500000);
+            $response = $telegram->sendDocument([
+                'chat_id' => (string)$chatId,
+                'document' => InputFile::create(self::$pathToDocs . $randDocs),
+                'caption' => $randDocs
+            ]);
+        } elseif ('/video' === $incomingText) {
+            $response = $telegram->sendVideo([
+                'chat_id' => (string)$chatId,
+                'video' => InputFile::create(self::$pathToVideos . $randVideo),
+                'caption' => $randVideo
+            ]);
+        } elseif ('/sticker' === $incomingText) {
+            $arrStickers = [
+                'CAACAgIAAxkBAAIBuGHwdjKPYNPl15xsJpJVGsoKjDOVAAIUDwAC1I9gS7jbkdj0UX0_IwQ',
+                'CAACAgIAAxkBAAIBumHwdjUeAAFgSOUos4_vqFxO54pCEwACaAEAAj0N6ATymcINj4C7YyME',
+                'CAACAgIAAxkBAAIBvGHwdjmIWqn4oORTUbpQrMt3d2vGAAJJAQACe04qENKK0NXppX3fIwQ',
+                'CAACAgIAAxkBAAIBvmHwdkCfDsFr75EXtNnbAfHeHq49AAJ8AQACe04qENf3ZOpShYC8IwQ',
+                'CAACAgIAAxkBAAIBwGHwdkX-LO3oSG0DXi0i2LihHkrXAAJGAANSiZEj-P7l5ArVCh0jBA',
+                'CAACAgIAAxkBAAIBwmHwdkhabKx3yNFnt_VoaJJtUi4NAAJcAQACPQ3oBAABMsv78bItBCME',
+            ];
+
+            $response = $telegram->sendSticker([
+                'chat_id' => (string)$chatId,
+                'sticker' => $arrStickers[array_rand($arrStickers)],
+            ]);
+        } elseif ('/start' === $incomingText) {
+            $response = $telegram->sendMessage([
+                'chat_id' => (string)$chatId,
+                'text' => 'Вы активировали команду `start`',
+                'parse_mode' => 'Markdown' // OR 'HTML'
+            ]);
+        } elseif ('/help' === $incomingText) {
+            $response = $telegram->sendMessage([
+                'chat_id' => (string)$chatId,
+                'text' => 'Появились вопросы?' . PHP_EOL . '[Свяжитесь со мной](https://yaleksandr89.github.io/)',
+                'parse_mode' => 'Markdown', // OR 'HTML'
+                //'disable_web_page_preview' => true
+            ]);
+        } elseif (array_key_exists('sticker', $typeMessage)) {
+            $idSticker = $typeMessage['sticker']['file_id'];
+            $response = $telegram->sendMessage([
+                'chat_id' => (string)$chatId,
+                'text' => "Вы отправили стикер.\nИдентификатор стикера: `$idSticker`",
+                'parse_mode' => 'Markdown'
+            ]);
+        } elseif (count($matchesCoordinates) > 2) {
+            $coordinates = preg_replace('/\s/', '', $matchesCoordinates[2]);
+            $coordinates = explode(',', $coordinates);
+
+            if (isset($coordinates[0], $coordinates[1]) && (is_numeric($coordinates[0]) && is_numeric($coordinates[1]))) {
+                $response = $telegram->sendLocation([
                     'chat_id' => (string)$chatId,
-                    'sticker' => $arrStickers[array_rand($arrStickers)],
+                    'latitude' => $coordinates[0],
+                    'longitude' => $coordinates[1],
                 ]);
-                break;
-            case '/start':
+            } else {
                 $telegram->sendMessage([
                     'chat_id' => (string)$chatId,
-                    'text' => 'Отправляю файл...',
+                    'text' => 'Переданные координаты некорректны!',
                 ]);
-                $response = $telegram->sendMessage([
-                    'chat_id' => (string)$chatId,
-                    'text' => 'Вы активировали команду `start`',
-                    'parse_mode' => 'Markdown' // OR 'HTML'
-                ]);
-                break;
-            case '/help':
-                $response = $telegram->sendMessage([
-                    'chat_id' => (string)$chatId,
-                    'text' => 'Появились вопросы?' . PHP_EOL . '[Свяжитесь со мной](https://yaleksandr89.github.io/)',
-                    'parse_mode' => 'Markdown', // OR 'HTML'
-                    //'disable_web_page_preview' => true
-                ]);
-                break;
-            // Command <<<
-            default:
-                if (array_key_exists('sticker', $typeMessage)) {
-                    $idSticker = $typeMessage['sticker']['file_id'];
-                    $response = $telegram->sendMessage([
-                        'chat_id' => (string)$chatId,
-                        'text' => "Вы отправили стикер.\nИдентификатор стикера: `$idSticker`",
-                        'parse_mode' => 'Markdown'
-                    ]);
-                } else {
-                    $textResponse = ($isEditMessage === false)
-                        ? "*Привет {$typeMessage['from']['first_name']}*. Ты написал: '{$typeMessage['text']}'"
-                        : '(Сообщение отредактировано в ' . date('d.m.Y H:i:s', $typeMessage['edit_date']) . ')' . PHP_EOL . "*Привет {$typeMessage['from']['first_name']}*" . PHP_EOL . "Тобой было написано: '{$typeMessage['text']}'";
+                die;
+            }
+        } else {
+            $textResponse = ($isEditMessage === false)
+                ? "*Привет {$typeMessage['from']['first_name']}*. Ты написал: '{$typeMessage['text']}'"
+                : '(Сообщение отредактировано в ' . date('d.m.Y H:i:s', $typeMessage['edit_date']) . ')' . PHP_EOL . "*Привет {$typeMessage['from']['first_name']}*" . PHP_EOL . "Тобой было написано: '{$typeMessage['text']}'";
 
-                    $response = $telegram->sendMessage([
-                        'chat_id' => (string)$chatId,
-                        'text' => $textResponse,
-                        'parse_mode' => 'Markdown'
-                    ]);
-                }
+            $response = $telegram->sendMessage([
+                'chat_id' => (string)$chatId,
+                'text' => $textResponse,
+                'parse_mode' => 'Markdown'
+            ]);
         }
 
         return $response;
