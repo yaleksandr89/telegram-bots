@@ -43,22 +43,39 @@ class TelegramBotApiHelper
         $chatId = $typeMessage['chat']['id'];
         $photoCommand = strtolower(trim($typeMessage['text']));
 
-        if ('photo' === $photoCommand) {
-            $response = $telegram->sendPhoto([
-                'chat_id' => (string)$chatId,
-                'photo' => InputFile::create(self::$pathToImages . $randImg),
-                'caption' => $randImg
-            ]);
-        } else {
-            $textResponse = ($isEditMessage === false)
-                ? "*Привет {$typeMessage['from']['first_name']}*. Ты написал: '{$typeMessage['text']}'"
-                : '(Сообщение отредактировано в ' . date('d.m.Y H:i:s', $typeMessage['edit_date']) . ')' . PHP_EOL . "*Привет {$typeMessage['from']['first_name']}*" . PHP_EOL . "Тобой было написано: '{$typeMessage['text']}'";
+        switch ($photoCommand) {
+            case 'photo':
+                $response = $telegram->sendPhoto([
+                    'chat_id' => (string)$chatId,
+                    'photo' => InputFile::create(self::$pathToImages . $randImg),
+                    'caption' => $randImg
+                ]);
+                break;
+            case '/start':
+                $response = $telegram->sendMessage([
+                    'chat_id' => (string)$chatId,
+                    'text' => 'Вы активировали команду `start`',
+                    'parse_mode' => 'Markdown' // OR 'HTML'
+                ]);
+                break;
+            case '/help':
+                $response = $telegram->sendMessage([
+                    'chat_id' => (string)$chatId,
+                    'text' => 'Вы активировали команду `help`.' . PHP_EOL . '[Contact me](https://yaleksandr89.github.io/)',
+                    'parse_mode' => 'Markdown', // OR 'HTML'
+                    //'disable_web_page_preview' => true
+                ]);
+                break;
+            default:
+                $textResponse = ($isEditMessage === false)
+                    ? "*Привет {$typeMessage['from']['first_name']}*. Ты написал: '{$typeMessage['text']}'"
+                    : '(Сообщение отредактировано в ' . date('d.m.Y H:i:s', $typeMessage['edit_date']) . ')' . PHP_EOL . "*Привет {$typeMessage['from']['first_name']}*" . PHP_EOL . "Тобой было написано: '{$typeMessage['text']}'";
 
-            $response = $telegram->sendMessage([
-                'chat_id' => (string)$chatId,
-                'text' => $textResponse,
-                'parse_mode' => 'Markdown' // OR 'HTML'
-            ]);
+                $response = $telegram->sendMessage([
+                    'chat_id' => (string)$chatId,
+                    'text' => $textResponse,
+                    'parse_mode' => 'Markdown' // OR 'HTML'
+                ]);
         }
 
         return $response;
