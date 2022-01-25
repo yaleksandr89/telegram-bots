@@ -5,7 +5,6 @@ namespace FirstBot;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamInterface;
 
 class EchoTelegramBot
 {

@@ -1,10 +1,10 @@
 <?php
 
 use GuzzleHttp\Client;
+
 /**
  * @var Client $client
  */
-
 
 if (file_exists('../../config.php')) {
     include_once '../../config.php';
@@ -12,7 +12,17 @@ if (file_exists('../../config.php')) {
     die('Please, created config file.');
 }
 
+function addToLogs(mixed $message)
+{
+    file_put_contents(__DIR__ . '/logs-messages.txt', print_r($message, true), FILE_APPEND);
+}
+
 try {
+    // Guzzle HTTP init
+    $client = new Client([
+        'base_uri' => 'https://api.telegram.org/bot' . FIRST_BOT_TOKEN . '/'
+    ]);
+
     /** DON'T USE AN INFINITE LOOP ON A REAL SERVER! */
     while (true) {
         // >>> getUpdates
@@ -32,10 +42,11 @@ try {
         $preparedRequestInfo = json_decode($contentsGetUpdates, true, 512, JSON_THROW_ON_ERROR);
         if (count($preparedRequestInfo['result']) > 0) {
             foreach ($preparedRequestInfo['result'] as $key => $item) {
-                echo $item['message']['text'] . "\n";
-                file_put_contents(__DIR__ . '/logs-messages.txt', print_r($preparedRequestInfo['result'][$key], true), FILE_APPEND);
+                echo $item['message']['text'] . "\n"; // Output to console
+                addToLogs($preparedRequestInfo['result'][$key]); // Output to logs
+
                 $lastUpdate = $item['update_id'];
-                $responseText = 'Вы написали: ' . $item['message']['text'];
+                $responseText = "Привет {$item['message']['from']['first_name']}. Ты написал: '{$item['message']['text']}'";
 
                 $methodSendMessage = $client->get('sendMessage', [
                     'query' => [
