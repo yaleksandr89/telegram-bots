@@ -11,6 +11,7 @@ use TbaPhpSdk\Utils\TelegramBotApiHelper as Helper;
 
 try {
     Helper::$pathToImages = __DIR__ . '/img/';
+    Helper::$pathToDocs = __DIR__ . '/docs/';
     $telegram = new TelegramBotApi(TBA_PHP_SDK_TOKEN);
 
     // >>> getUpdates

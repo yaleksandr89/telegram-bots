@@ -16,6 +16,11 @@ class TelegramBotApiHelper
     public static string $pathToImages = '';
 
     /**
+     * @var string
+     */
+    public static string $pathToDocs = '';
+
+    /**
      * @return array
      */
     public static function getRandImg(): array
@@ -24,6 +29,17 @@ class TelegramBotApiHelper
 
         $listImg = scandir($pathToImage);
         return array_diff($listImg, ['.', '..']);
+    }
+
+    /**
+     * @return array
+     */
+    public static function getRandDocs(): array
+    {
+        $pathToDoc = ('' !== self::$pathToDocs) ? self::$pathToDocs : __DIR__;
+
+        $listDoc = scandir($pathToDoc);
+        return array_diff($listDoc, ['.', '..']);
     }
 
     /**
@@ -38,20 +54,49 @@ class TelegramBotApiHelper
         $arrImg = self::getRandImg();
         $randImg = $arrImg[array_rand($arrImg)];
 
+        $arrDocs = self::getRandDocs();
+        $randDocs = $arrDocs[array_rand($arrDocs)];
+
         $typeMessage = ($isEditMessage === false) ? $update['message'] : $update['edited_message'];
 
         $chatId = $typeMessage['chat']['id'];
         $photoCommand = strtolower(trim($typeMessage['text']));
 
         switch ($photoCommand) {
-            case 'photo':
+            case '/photo':
+                $telegram->sendMessage([
+                    'chat_id' => (string)$chatId,
+                    'text' => 'Подбираю изображение...',
+                ]);
+                usleep(500000);
+                $telegram->sendMessage([
+                    'chat_id' => (string)$chatId,
+                    'text' => 'Отправляю изображение...',
+                ]);
+                usleep(500000);
                 $response = $telegram->sendPhoto([
                     'chat_id' => (string)$chatId,
                     'photo' => InputFile::create(self::$pathToImages . $randImg),
                     'caption' => $randImg
                 ]);
                 break;
+            case '/document':
+                $telegram->sendMessage([
+                    'chat_id' => (string)$chatId,
+                    'text' => 'Отправляю файл...',
+                ]);
+                usleep(500000);
+                $response = $telegram->sendDocument([
+                    'chat_id' => (string)$chatId,
+                    'document' => InputFile::create(self::$pathToDocs . $randDocs),
+                    'caption' => $randDocs
+                ]);
+                break;
             case '/start':
+                $telegram->sendMessage([
+                    'chat_id' => (string)$chatId,
+                    'text' => 'Отправляю файл...',
+                ]);
                 $response = $telegram->sendMessage([
                     'chat_id' => (string)$chatId,
                     'text' => 'Вы активировали команду `start`',
@@ -61,7 +106,7 @@ class TelegramBotApiHelper
             case '/help':
                 $response = $telegram->sendMessage([
                     'chat_id' => (string)$chatId,
-                    'text' => 'Вы активировали команду `help`.' . PHP_EOL . '[Contact me](https://yaleksandr89.github.io/)',
+                    'text' => 'Появились вопросы?' . PHP_EOL . '[Свяжитесь со мной](https://yaleksandr89.github.io/)',
                     'parse_mode' => 'Markdown', // OR 'HTML'
                     //'disable_web_page_preview' => true
                 ]);
@@ -92,7 +137,7 @@ class TelegramBotApiHelper
             ob_start();
             if (array_key_exists('message', $update)) {
                 echo '===[' . date('d-m-Y H:i:s', $update['message']['date']) . ']===' . PHP_EOL;
-            } elseif  (array_key_exists('edited_message', $update)) {
+            } elseif (array_key_exists('edited_message', $update)) {
                 echo '===[' . date('d-m-Y H:i:s', $update['edited_message']['edit_date']) . ']===' . PHP_EOL;
             } else {
                 echo '===[' . date('d-m-Y H:i:s', $update['date']) . ']===' . PHP_EOL;
