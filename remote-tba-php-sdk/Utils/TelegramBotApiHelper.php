@@ -21,6 +21,11 @@ class TelegramBotApiHelper
     public static string $pathToDocs = '';
 
     /**
+     * @var string
+     */
+    public static string $pathToVideos = '';
+
+    /**
      * @return array
      */
     public static function getRandImg(): array
@@ -36,10 +41,21 @@ class TelegramBotApiHelper
      */
     public static function getRandDocs(): array
     {
-        $pathToDoc = ('' !== self::$pathToDocs) ? self::$pathToDocs : __DIR__;
+        $pathToDocs = ('' !== self::$pathToDocs) ? self::$pathToDocs : __DIR__;
 
-        $listDoc = scandir($pathToDoc);
+        $listDoc = scandir($pathToDocs);
         return array_diff($listDoc, ['.', '..']);
+    }
+
+    /**
+     * @return array
+     */
+    public static function getRandVideos(): array
+    {
+        $pathToVideos = ('' !== self::$pathToVideos) ? self::$pathToVideos : __DIR__;
+
+        $listVideo = scandir($pathToVideos);
+        return array_diff($listVideo, ['.', '..']);
     }
 
     /**
@@ -57,12 +73,16 @@ class TelegramBotApiHelper
         $arrDocs = self::getRandDocs();
         $randDocs = $arrDocs[array_rand($arrDocs)];
 
+        $arrVideos = self::getRandVideos();
+        $randVideo = $arrVideos[array_rand($arrVideos)];
+
         $typeMessage = ($isEditMessage === false) ? $update['message'] : $update['edited_message'];
 
         $chatId = $typeMessage['chat']['id'];
         $photoCommand = strtolower(trim($typeMessage['text']));
 
         switch ($photoCommand) {
+            // >>> Command
             case '/photo':
                 $telegram->sendMessage([
                     'chat_id' => (string)$chatId,
@@ -92,6 +112,28 @@ class TelegramBotApiHelper
                     'caption' => $randDocs
                 ]);
                 break;
+            case '/video':
+                $response = $telegram->sendVideo([
+                    'chat_id' => (string)$chatId,
+                    'video' => InputFile::create(self::$pathToVideos . $randVideo),
+                    'caption' => $randVideo
+                ]);
+                break;
+            case '/sticker':
+                $arrStickers = [
+                    'CAACAgIAAxkBAAIBuGHwdjKPYNPl15xsJpJVGsoKjDOVAAIUDwAC1I9gS7jbkdj0UX0_IwQ',
+                    'CAACAgIAAxkBAAIBumHwdjUeAAFgSOUos4_vqFxO54pCEwACaAEAAj0N6ATymcINj4C7YyME',
+                    'CAACAgIAAxkBAAIBvGHwdjmIWqn4oORTUbpQrMt3d2vGAAJJAQACe04qENKK0NXppX3fIwQ',
+                    'CAACAgIAAxkBAAIBvmHwdkCfDsFr75EXtNnbAfHeHq49AAJ8AQACe04qENf3ZOpShYC8IwQ',
+                    'CAACAgIAAxkBAAIBwGHwdkX-LO3oSG0DXi0i2LihHkrXAAJGAANSiZEj-P7l5ArVCh0jBA',
+                    'CAACAgIAAxkBAAIBwmHwdkhabKx3yNFnt_VoaJJtUi4NAAJcAQACPQ3oBAABMsv78bItBCME',
+                ];
+
+                $response = $telegram->sendSticker([
+                    'chat_id' => (string)$chatId,
+                    'sticker' => $arrStickers[array_rand($arrStickers)],
+                ]);
+                break;
             case '/start':
                 $telegram->sendMessage([
                     'chat_id' => (string)$chatId,
@@ -111,16 +153,26 @@ class TelegramBotApiHelper
                     //'disable_web_page_preview' => true
                 ]);
                 break;
+            // Command <<<
             default:
-                $textResponse = ($isEditMessage === false)
-                    ? "*Привет {$typeMessage['from']['first_name']}*. Ты написал: '{$typeMessage['text']}'"
-                    : '(Сообщение отредактировано в ' . date('d.m.Y H:i:s', $typeMessage['edit_date']) . ')' . PHP_EOL . "*Привет {$typeMessage['from']['first_name']}*" . PHP_EOL . "Тобой было написано: '{$typeMessage['text']}'";
+                if (array_key_exists('sticker', $typeMessage)) {
+                    $idSticker = $typeMessage['sticker']['file_id'];
+                    $response = $telegram->sendMessage([
+                        'chat_id' => (string)$chatId,
+                        'text' => "Вы отправили стикер.\nИдентификатор стикера: `$idSticker`",
+                        'parse_mode' => 'Markdown'
+                    ]);
+                } else {
+                    $textResponse = ($isEditMessage === false)
+                        ? "*Привет {$typeMessage['from']['first_name']}*. Ты написал: '{$typeMessage['text']}'"
+                        : '(Сообщение отредактировано в ' . date('d.m.Y H:i:s', $typeMessage['edit_date']) . ')' . PHP_EOL . "*Привет {$typeMessage['from']['first_name']}*" . PHP_EOL . "Тобой было написано: '{$typeMessage['text']}'";
 
-                $response = $telegram->sendMessage([
-                    'chat_id' => (string)$chatId,
-                    'text' => $textResponse,
-                    'parse_mode' => 'Markdown' // OR 'HTML'
-                ]);
+                    $response = $telegram->sendMessage([
+                        'chat_id' => (string)$chatId,
+                        'text' => $textResponse,
+                        'parse_mode' => 'Markdown'
+                    ]);
+                }
         }
 
         return $response;
