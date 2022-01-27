@@ -10,6 +10,8 @@ use Telegram\Bot\Objects\Update;
 
 class TelegramBotApiHelper
 {
+    use DifferentTypesKeyboards;
+
     /** @var array $arrIdStickers */
     public static array $arrIdStickers = [
         'CAACAgIAAxkBAAIBuGHwdjKPYNPl15xsJpJVGsoKjDOVAAIUDwAC1I9gS7jbkdj0UX0_IwQ',
@@ -50,10 +52,20 @@ class TelegramBotApiHelper
 
         preg_match('/^(location:)(.+)$/i', $incomingText, $matchesCoordinates); // Поиск сообщения с содержанием координат, для отправки карты с меткой
 
-        usleep(500000); // Задержка выполнения между командами
+        usleep(250000); // Задержка выполнения между командами
         if ('/photo' === $incomingText) {
-            self::sendMessage(telegram: $telegram, chatId: $chatId, message: 'Подбираю изображение...', delayMicroSecond: 500000);
-            self::sendMessage(telegram: $telegram, chatId: $chatId, message: 'Отправляю изображение...', delayMicroSecond: 500000);
+            self::sendMessage(
+                telegram: $telegram,
+                chatId: $chatId,
+                message: 'Подбираю изображение...',
+                delayMicroSecond: 500000
+            );
+            self::sendMessage(
+                telegram: $telegram,
+                chatId: $chatId,
+                message: 'Отправляю изображение...',
+                delayMicroSecond: 500000
+            );
 
             $response = $telegram->sendPhoto([
                 'chat_id' => $chatId,
@@ -61,7 +73,12 @@ class TelegramBotApiHelper
                 'caption' => $randImg
             ]);
         } elseif ('/document' === $incomingText) {
-            self::sendMessage(telegram: $telegram, chatId: $chatId, message: 'Отправляю файл...', delayMicroSecond: 500000);
+            self::sendMessage(
+                telegram: $telegram,
+                chatId: $chatId,
+                message: 'Отправляю файл...',
+                delayMicroSecond: 500000
+            );
 
             $response = $telegram->sendDocument([
                 'chat_id' => $chatId,
@@ -80,12 +97,41 @@ class TelegramBotApiHelper
                 'sticker' => self::$arrIdStickers[array_rand(self::$arrIdStickers)],
             ]);
         } elseif ('/start' === $incomingText) {
-            $response = self::sendMessage(telegram: $telegram, chatId: $chatId, message: 'Вы активировали команду `start`', additionalParams: ['parse_mode' => 'Markdown']);
+            $response = self::sendMessage(
+                telegram: $telegram,
+                chatId: $chatId,
+                message: 'Выберите команду',
+                additionalParams: [
+                    'parse_mode' => 'Markdown',
+                    'reply_markup' => self::preparedSelectedKeyboards(
+                        self::simpleKeyboardsWithComplexBtn(),
+                        [
+                            'resize_keyboard' => true,
+                            'one_time_keyboard' => true,
+                            'input_field_placeholder' => 'Выберите нужную команду'
+                        ]
+                    )
+                ]
+            );
         } elseif ('/help' === $incomingText) {
-            $response = self::sendMessage(telegram: $telegram, chatId: $chatId, message: 'Появились вопросы?' . PHP_EOL . '[Свяжитесь со мной](https://yaleksandr89.github.io/)', additionalParams: ['parse_mode' => 'Markdown']);
+            $response = self::sendMessage(
+                telegram: $telegram,
+                chatId: $chatId,
+                message: 'Появились вопросы?' . PHP_EOL . '[Свяжитесь со мной](https://yaleksandr89.github.io/)',
+                additionalParams: [
+                    'parse_mode' => 'Markdown'
+                ]
+            );
         } elseif (array_key_exists('sticker', $typeMessage)) {
             $idSticker = $typeMessage['sticker']['file_id'];
-            $response = self::sendMessage(telegram: $telegram, chatId: $chatId, message: "Вы отправили стикер.\nИдентификатор стикера: `$idSticker`", additionalParams: ['parse_mode' => 'Markdown']);
+            $response = self::sendMessage(
+                telegram: $telegram,
+                chatId: $chatId,
+                message: "Вы отправили стикер.\nИдентификатор стикера: `$idSticker`",
+                additionalParams: [
+                    'parse_mode' => 'Markdown'
+                ]
+            );
         } elseif (count($matchesCoordinates) > 2) {
             $coordinates = preg_replace('/\s/', '', $matchesCoordinates[2]);
             $coordinates = explode(',', $coordinates);
@@ -97,15 +143,72 @@ class TelegramBotApiHelper
                     'longitude' => $coordinates[1],
                 ]);
             } else {
-                self::sendMessage(telegram: $telegram, chatId: $chatId, message: 'Переданные координаты некорректны!');
+                self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: 'Переданные координаты некорректны!'
+                );
                 die;
             }
+        } elseif ('Убрать клавиатуру' === $incomingText) {
+            $response = self::sendMessage(
+                telegram: $telegram,
+                chatId: $chatId,
+                message: 'Клавиатура убрана',
+                additionalParams: [
+                    'reply_markup' => self::removeSelectedKeyboard()
+                ]
+            );
+        } elseif ('Открыть продвинутую клавиатуру' === $incomingText) {
+            $response = self::sendMessage(
+                telegram: $telegram,
+                chatId: $chatId,
+                message: 'Переключаюсь на продвинутую клавиатуру...',
+                additionalParams: [
+                    'parse_mode' => 'Markdown',
+                    'reply_markup' => self::preparedSelectedKeyboards(
+                        self::complexKeyboards(),
+                        [
+                            'resize_keyboard' => true,
+                            'one_time_keyboard' => true,
+                            'input_field_placeholder' => 'Выберите нужную команду'
+                        ]
+                    )
+                ]
+            );
+        } elseif ('Вернуться на стартовую клавиатуру' === $incomingText) {
+            $response = self::sendMessage(
+                telegram: $telegram,
+                chatId: $chatId,
+                message: 'Возвращаюсь назад...',
+                additionalParams: [
+                    'parse_mode' => 'Markdown',
+                    'reply_markup' => self::preparedSelectedKeyboards(
+                        self::simpleKeyboardsWithComplexBtn(),
+                        [
+                            'resize_keyboard' => true,
+                            'one_time_keyboard' => true,
+                        ]
+                    )
+                ]
+            );
         } else {
+            if (true === (array_key_exists('location', $typeMessage) || array_key_exists('contact', $typeMessage))) {
+                die;
+            }
+
             $textResponse = ($isEditMessage === false)
                 ? "*Привет {$typeMessage['from']['first_name']}*. Ты написал: '{$typeMessage['text']}'"
                 : '(Сообщение отредактировано в ' . date('d.m.Y H:i:s', $typeMessage['edit_date']) . ')' . PHP_EOL . "*Привет {$typeMessage['from']['first_name']}*" . PHP_EOL . "Тобой было написано: '{$typeMessage['text']}'";
 
-            $response = self::sendMessage(telegram: $telegram, chatId: $chatId, message: $textResponse, additionalParams: ['parse_mode' => 'Markdown']);
+            $response = self::sendMessage(
+                telegram: $telegram,
+                chatId: $chatId,
+                message: $textResponse,
+                additionalParams: [
+                    'parse_mode' => 'Markdown'
+                ]
+            );
         }
 
         return $response;
