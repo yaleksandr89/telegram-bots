@@ -46,13 +46,17 @@ class TelegramBotApiHelper
         $arrVideos = self::getRandFile($videosFolder);
         $randVideo = $arrVideos[array_rand($arrVideos)];
 
-        $typeMessage = ($isEditMessage === false) ? $update['message'] : $update['edited_message'];
-        $chatId = (string)$typeMessage['chat']['id'];
-        $incomingText = strtolower(trim($typeMessage['text']));
+        if (isset($update['message'])){
+            $typeMessage = ($isEditMessage === false) ? $update['message'] : $update['edited_message'];
+            $chatId = (string)$typeMessage['chat']['id'];
+            $incomingText = isset($typeMessage['text']) ? strtolower(trim($typeMessage['text'])) : '';
+        } else {
+            $incomingText = '';
+        }
 
         preg_match('/^(location:)(.+)$/i', $incomingText, $matchesCoordinates); // Поиск сообщения с содержанием координат, для отправки карты с меткой
-
         usleep(250000); // Задержка выполнения между командами
+
         if ('/photo' === $incomingText) {
             self::sendMessage(
                 telegram: $telegram,
@@ -113,43 +117,6 @@ class TelegramBotApiHelper
                     )
                 ]
             );
-        } elseif ('/help' === $incomingText) {
-            $response = self::sendMessage(
-                telegram: $telegram,
-                chatId: $chatId,
-                message: 'Появились вопросы?' . PHP_EOL . '[Свяжитесь со мной](https://yaleksandr89.github.io/)',
-                additionalParams: [
-                    'parse_mode' => 'Markdown'
-                ]
-            );
-        } elseif (array_key_exists('sticker', $typeMessage)) {
-            $idSticker = $typeMessage['sticker']['file_id'];
-            $response = self::sendMessage(
-                telegram: $telegram,
-                chatId: $chatId,
-                message: "Вы отправили стикер.\nИдентификатор стикера: `$idSticker`",
-                additionalParams: [
-                    'parse_mode' => 'Markdown'
-                ]
-            );
-        } elseif (count($matchesCoordinates) > 2) {
-            $coordinates = preg_replace('/\s/', '', $matchesCoordinates[2]);
-            $coordinates = explode(',', $coordinates);
-
-            if (isset($coordinates[0], $coordinates[1]) && (is_numeric($coordinates[0]) && is_numeric($coordinates[1]))) {
-                $response = $telegram->sendLocation([
-                    'chat_id' => $chatId,
-                    'latitude' => $coordinates[0],
-                    'longitude' => $coordinates[1],
-                ]);
-            } else {
-                self::sendMessage(
-                    telegram: $telegram,
-                    chatId: $chatId,
-                    message: 'Переданные координаты некорректны!'
-                );
-                die;
-            }
         } elseif ('Убрать клавиатуру' === $incomingText) {
             $response = self::sendMessage(
                 telegram: $telegram,
@@ -192,8 +159,54 @@ class TelegramBotApiHelper
                     )
                 ]
             );
+        } elseif ('/help' === $incomingText) {
+            $response = self::sendMessage(
+                telegram: $telegram,
+                chatId: $chatId,
+                message: 'Выберите команду',
+                additionalParams: [
+                    //'parse_mode' => 'Markdown',
+                    'reply_markup' => self::preparedSelectedKeyboards(
+                        keyBoards: self::inlineKeyboards(),
+                        inlineKeyboards: true
+                    )
+                ]
+            );
+        } elseif (isset($typeMessage['sticker'])) {
+            $idSticker = $typeMessage['sticker']['file_id'];
+            $response = self::sendMessage(
+                telegram: $telegram,
+                chatId: $chatId,
+                message: "Вы отправили стикер.\nИдентификатор стикера: `$idSticker`",
+                additionalParams: [
+                    'parse_mode' => 'Markdown'
+                ]
+            );
+        } elseif (count($matchesCoordinates) > 2) {
+            $coordinates = preg_replace('/\s/', '', $matchesCoordinates[2]);
+            $coordinates = explode(',', $coordinates);
+
+            if (isset($coordinates[0], $coordinates[1]) && (is_numeric($coordinates[0]) && is_numeric($coordinates[1]))) {
+                $response = $telegram->sendLocation([
+                    'chat_id' => $chatId,
+                    'latitude' => $coordinates[0],
+                    'longitude' => $coordinates[1],
+                ]);
+            } else {
+                self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: 'Переданные координаты некорректны!'
+                );
+                die;
+            }
+        } elseif (isset($update['callback_query'])) {
+            $response = $telegram->sendSticker([
+                'chat_id' => $update['callback_query']['message']['chat']['id'],
+                'sticker' => self::$arrIdStickers[array_rand(self::$arrIdStickers)],
+            ]);
         } else {
-            if (true === (array_key_exists('location', $typeMessage) || array_key_exists('contact', $typeMessage))) {
+            if (array_key_exists('location', $typeMessage) || array_key_exists('contact', $typeMessage)) {
                 die;
             }
 
@@ -267,6 +280,8 @@ class TelegramBotApiHelper
                 echo '===[' . date('d-m-Y H:i:s', $update['message']['date']) . ']===' . PHP_EOL;
             } elseif (array_key_exists('edited_message', $update)) {
                 echo '===[' . date('d-m-Y H:i:s', $update['edited_message']['edit_date']) . ']===' . PHP_EOL;
+            } elseif (array_key_exists('callback_query', $update)) {
+                echo '===[' . date('d-m-Y H:i:s', $update['callback_query']['message']['date']) . ']===' . PHP_EOL;
             } else {
                 echo '===[' . date('d-m-Y H:i:s', $update['date']) . ']===' . PHP_EOL;
             }

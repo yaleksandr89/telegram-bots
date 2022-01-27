@@ -6,6 +6,7 @@ use Telegram\Bot\Keyboard\Keyboard;
 
 trait DifferentTypesKeyboards
 {
+    // >>> SIMPLE KEYBOARDS
     /**
      * @return array
      */
@@ -51,16 +52,47 @@ trait DifferentTypesKeyboards
             ['Убрать клавиатуру'],
         ];
     }
+    // SIMPLE KEYBOARDS <<<
+
+    // >>> INLINE KEYBOARDS
+    /**
+     * @return array
+     */
+    protected static function inlineKeyboards(): array
+    {
+        return [
+            [
+                [
+                    'text' => 'Сайт визитка',
+                    'url' => 'https://yaleksandr89.github.io/',
+                ],
+                [
+                    'text' => 'Вконтакте',
+                    'url' => 'https://vk.com/y.aleksandr89',
+                ],
+            ],
+            [
+                [
+                    'text' => 'Функциональная кнопка',
+                    'callback_data' => 'cb_query',
+                ],
+            ],
+        ];
+    }
+    // >>> INLINE KEYBOARDS
 
     /**
      * @param array $keyBoards
      * @param array $additionalParams
+     * @param bool $inlineKeyboards
      * @return Keyboard
      */
-    protected static function preparedSelectedKeyboards(array $keyBoards, array $additionalParams = []): Keyboard
+    protected static function preparedSelectedKeyboards(array $keyBoards, array $additionalParams = [], bool $inlineKeyboards = false): Keyboard
     {
+        $typeKeyboard = $inlineKeyboards ? 'inline_keyboard' : 'keyboard';
+
         $params = [
-            'keyboard' => $keyBoards,
+            $typeKeyboard => $keyBoards,
         ];
 
         if (count($additionalParams) > 0) {

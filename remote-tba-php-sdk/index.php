@@ -24,7 +24,7 @@ try {
         } else {
             $response = Helper::definedTypeMessage($telegram, $update);
         }
-        Helper::writeToLogs($response->getRawResponse(), __DIR__.'/response_logs.txt');
+     //   Helper::writeToLogs($response->getRawResponse(), __DIR__.'/response_logs.txt');
     }
     // sendMessage <<<
 } catch (Throwable $e) {
