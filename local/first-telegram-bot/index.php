@@ -3,8 +3,8 @@
 use FirstBot\EchoTelegramBot;
 use GuzzleHttp\Client;
 
-if (file_exists('../config.php')) {
-    include_once '../config.php';
+if (file_exists('../../config.php')) {
+    include_once '../../config.php';
 } else {
     die('Please, created config file.');
 }
@@ -44,5 +44,7 @@ try {
         sleep(2);
     }
 } catch (Throwable $e) {
-    dd($e->getMessage());
+    file_put_contents(__DIR__ . '/try_catch_logs.txt', date('d.m.Y H:i:s') . PHP_EOL . print_r($e, true), FILE_APPEND);
 }
+
+die('Silence is gold.');

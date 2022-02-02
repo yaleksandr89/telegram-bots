@@ -8,10 +8,10 @@
     },
     "autoload": {
         "psr-4": {
-            "FirstBot\\": "local-first-telegram-bot/",
-            "SecondBot\\": "local-second-telegram-bot/",
-            "TbaPhpSdk\\": "remote-tba-php-sdk/",
-            "SimpleBot\\": "remote-echo-bot/"
+            "FirstBot\\": "local/first-telegram-bot/",
+            "SecondBot\\": "local/second-telegram-bot/",
+            "TbaPhpSdk\\": "remote/tba-php-sdk/",
+            "SimpleBot\\": "remote/echo-bot/"
         }
     }
 }

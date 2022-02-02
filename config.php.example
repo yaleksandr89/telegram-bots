@@ -1,0 +1,36 @@
+<?php
+
+/** RENAME THIS FILE TO config.php */
+
+require_once 'vendor/autoload.php';
+
+/**
+ * General information:
+ * Bot API:            https://core.telegram.org/bots/api
+ * Bot Code Examples:  https://core.telegram.org/bots/samples#dev_page_title
+ */
+const BASE_URL = 'https://api.telegram.org/bot';
+
+
+// >>> Token for local telegram bots
+/**
+ * Токен используется для ботов из директории: local
+*/
+const FIRST_BOT_TOKEN = '...';
+// Token for local telegram bots <<<
+
+
+// >>> Token for remote telegram bots
+/**
+ * Логин: ...
+ *
+ * Привязка URL к вебхуку:
+ * echo BASE_URL  . EXAMPLE_TOKEN . '/setWebhook?url={{ URL YOUR SITE, https - required }}';
+ * https://api.telegram.org/bot{{EXAMPLE_TOKEN }}/setWebhook?url={{ URL YOUR SITE, https - required }}
+ *
+ * Проверка статуса вебхука:
+ * https://api.telegram.org/bot{{EXAMPLE_TOKEN }}/getWebhookInfo?url={{ URL YOUR SITE, https - required }}
+*/
+const SIMPLE_BOT_TOKEN = '...'; // Токен используется для ботов из директории: remote/echo-bot
+const TBA_PHP_SDK_TOKEN = '...'; // Токен используется для ботов из директории: remote/tba-php-sdk
+// Token for remote telegram bots <<<

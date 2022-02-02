@@ -1,17 +1,14 @@
 <?php
 
-if (file_exists('../config.php')) {
-    include_once '../config.php';
+use SecondBot\EchoTelegramBot as SecondEchoTelegramBot;
+use GuzzleHttp\Client;
+
+if (file_exists('../../config.php')) {
+    include_once '../../config.php';
 } else {
     die('Please, created config file.');
 }
 
-use GuzzleHttp\Client;
-use SimpleBot\EchoTelegramBot;
-
-/** @var GuzzleHttp\Client $client */
-
-/** WORKS ONLY ON HOSTING OR VDS */
 try {
     function getRandImg(): array
     {
@@ -54,30 +51,32 @@ try {
         }
     }
 
-    $echoTelegramBot = new EchoTelegramBot(new Client(), SIMPLE_BOT_TOKEN, BASE_URL);
+    $echoTelegramBot = new SecondEchoTelegramBot(new Client(), FIRST_BOT_TOKEN, BASE_URL);
 
-    // >>> getUpdates
-    $update = json_decode(
-        file_get_contents('php://input'),
-        true
-    );
-    // getUpdates <<<
+    /** DON'T USE AN INFINITE LOOP ON A REAL SERVER! */
+    while (true) {
+        // >>> getUpdates
+        $getUpdatesContent = $echoTelegramBot->getUpdates(true);
+        // getUpdates <<<
 
-    // >>> sendMessage
-    if (isset($update)) {
-        $echoTelegramBot->addToLogs($update);
+        // >>> sendMessage
+        if (count($getUpdatesContent) > 0) {
+            foreach ($getUpdatesContent as $item) {
+                if (array_key_exists('message', $item)) {
+                    definedTypeMessage($echoTelegramBot, $item);
+                }
 
-        if (array_key_exists('message', $update)) {
-            definedTypeMessage($echoTelegramBot, $update);
+                if (array_key_exists('edited_message', $item)) {
+                    definedTypeMessage($echoTelegramBot, $item, true);
+                }
+            }
         }
+        // sendMessage <<<
 
-        if (array_key_exists('edited_message', $update)) {
-            definedTypeMessage($echoTelegramBot, $update, true);
-        }
+        sleep(2);
     }
-    // sendMessage <<<
 } catch (Throwable $e) {
-    dd('Error', $e);
+    file_put_contents(__DIR__ . '/try_catch_logs.txt', date('d.m.Y H:i:s') . PHP_EOL . print_r($e, true), FILE_APPEND);
 }
 
 die('Silence is gold.');
