@@ -14,7 +14,7 @@ try {
 
     // >>> getUpdates
     $update = $telegram->getWebhookUpdate();
-    Helper::writeToLogs($update->getRawResponse(), __DIR__.'/update_logs.txt');
+    Helper::writeToLogs($update->getRawResponse(), __DIR__ . '/update_logs.txt');
     // getUpdates <<<
 
     // >>> sendMessage
@@ -24,11 +24,14 @@ try {
         } else {
             $response = Helper::definedTypeMessage($telegram, $update);
         }
-     //   Helper::writeToLogs($response->getRawResponse(), __DIR__.'/response_logs.txt');
+
+        if (is_object($response)) {
+            Helper::writeToLogs($response->getRawResponse(), __DIR__ . '/response_logs.txt');
+        }
     }
     // sendMessage <<<
 } catch (Throwable $e) {
-    dd('Error:', $e->getMessage());
+    file_put_contents(__DIR__ . '/try_catch_logs.txt', date('d.m.Y H:i:s') . PHP_EOL . print_r($e, true), FILE_APPEND);
 }
 
 die('Silence is golden.');

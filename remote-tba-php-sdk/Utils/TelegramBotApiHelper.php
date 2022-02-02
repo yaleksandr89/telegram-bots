@@ -5,8 +5,8 @@ namespace TbaPhpSdk\Utils;
 use Telegram\Bot\Api as TelegramBotApi;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\FileUpload\InputFile;
-use Telegram\Bot\Objects\Message;
 use Telegram\Bot\Objects\Update;
+use Telegram\Bot\Objects\Message as MessageObject;
 
 class TelegramBotApiHelper
 {
@@ -26,10 +26,10 @@ class TelegramBotApiHelper
      * @param TelegramBotApi $telegram
      * @param Update $update
      * @param bool $isEditMessage
-     * @return Message
+     * @return MessageObject
      * @throws TelegramSDKException
      */
-    public static function definedTypeMessage(TelegramBotApi $telegram, Update $update, bool $isEditMessage = false): Message
+    public static function definedTypeMessage(TelegramBotApi $telegram, Update $update, bool $isEditMessage = false): MessageObject
     {
         // Получение случайного файла из 'img'
         $imgFolder = __DIR__ . '/../img/';
@@ -46,12 +46,14 @@ class TelegramBotApiHelper
         $arrVideos = self::getRandFile($videosFolder);
         $randVideo = $arrVideos[array_rand($arrVideos)];
 
-        if (isset($update['message'])){
+        if (isset($update['message'])) {
             $typeMessage = ($isEditMessage === false) ? $update['message'] : $update['edited_message'];
             $chatId = (string)$typeMessage['chat']['id'];
             $incomingText = isset($typeMessage['text']) ? strtolower(trim($typeMessage['text'])) : '';
         } else {
+            $typeMessage = '';
             $incomingText = '';
+            $chatId = -1;
         }
 
         preg_match('/^(location:)(.+)$/i', $incomingText, $matchesCoordinates); // Поиск сообщения с содержанием координат, для отправки карты с меткой
@@ -201,9 +203,10 @@ class TelegramBotApiHelper
                 die;
             }
         } elseif (isset($update['callback_query'])) {
-            $response = $telegram->sendSticker([
-                'chat_id' => $update['callback_query']['message']['chat']['id'],
-                'sticker' => self::$arrIdStickers[array_rand(self::$arrIdStickers)],
+            $response = $telegram->answerCallbackQuery([
+                'callback_query_id' => $update['callback_query']['id'],
+                'text' => 'Сработала функция обратного вызова ' . $update['callback_query']['data'],
+                'show_alert' => true,
             ]);
         } else {
             if (array_key_exists('location', $typeMessage) || array_key_exists('contact', $typeMessage)) {
@@ -233,10 +236,10 @@ class TelegramBotApiHelper
      * @param string $message
      * @param array $additionalParams
      * @param int $delayMicroSecond
-     * @return Message
+     * @return MessageObject
      * @throws TelegramSDKException
      */
-    private static function sendMessage(TelegramBotApi $telegram, string $chatId, string $message, array $additionalParams = [], int $delayMicroSecond = 0): Message
+    private static function sendMessage(TelegramBotApi $telegram, string $chatId, string $message, array $additionalParams = [], int $delayMicroSecond = 0): MessageObject
     {
         $params = [
             'chat_id' => $chatId,
