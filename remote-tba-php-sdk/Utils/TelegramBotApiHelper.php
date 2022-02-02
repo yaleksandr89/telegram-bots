@@ -26,10 +26,13 @@ class TelegramBotApiHelper
      * @param TelegramBotApi $telegram
      * @param Update $update
      * @param bool $isEditMessage
-     * @return MessageObject
+     * @return MessageObject|bool
      * @throws TelegramSDKException
+     *
+     * // Из-за $telegram->answerCallbackQuery возвращаемый тип MessageObject|bool,
+     * а не Telegram\Bot\Objects\Message ( ->answerCallbackQuery - возвращает bool)
      */
-    public static function definedTypeMessage(TelegramBotApi $telegram, Update $update, bool $isEditMessage = false): MessageObject
+    public static function definedTypeMessage(TelegramBotApi $telegram, Update $update, bool $isEditMessage = false): MessageObject|bool
     {
         // Получение случайного файла из 'img'
         $imgFolder = __DIR__ . '/../img/';
@@ -203,10 +206,20 @@ class TelegramBotApiHelper
                 die;
             }
         } elseif (isset($update['callback_query'])) {
-            $response = $telegram->answerCallbackQuery([
+            $telegram->answerCallbackQuery([
                 'callback_query_id' => $update['callback_query']['id'],
                 'text' => 'Сработала функция обратного вызова ' . $update['callback_query']['data'],
-                'show_alert' => true,
+                'show_alert' => false,
+            ]);
+
+            $response = $telegram->editMessageText([
+                'chat_id' => $update['callback_query']['message']['chat']['id'],
+                'message_id' => $update['callback_query']['message']['message_id'],
+                'text' => 'Команда обработана в '. date('d.m.Y H:i:s') .' 👍',
+                'reply_markup' => self::preparedSelectedKeyboards(
+                    keyBoards: self::inlineKeyboards(),
+                    inlineKeyboards: true
+                )
             ]);
         } else {
             if (array_key_exists('location', $typeMessage) || array_key_exists('contact', $typeMessage)) {
