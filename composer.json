@@ -1,16 +1,18 @@
 {
-    "require-dev": {
-        "symfony/var-dumper": "^6.0"
-    },
-    "require": {
-        "guzzlehttp/guzzle": "^7.4",
-        "irazasyed/telegram-bot-sdk": "^3.4"
-    },
-    "autoload": {
-        "psr-4": {
-            "SimpleBot\\": "simple-bot/",
-            "TbaPhpSdk\\": "tba-php-sdk/",
-            "YaTranslationBot\\": "translation-bot/"
-        }
+  "require-dev": {
+    "symfony/var-dumper": "^6.0"
+  },
+  "require": {
+    "guzzlehttp/guzzle": "^7.4",
+    "irazasyed/telegram-bot-sdk": "^3.4",
+    "dejurin/php-google-translate-for-free": "^1.0",
+    "ext-pdo": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "SimpleBot\\": "simple-bot/",
+      "TbaPhpSdk\\": "tba-php-sdk/",
+      "YaTranslationBot\\": "translation-bot/"
     }
+  }
 }
