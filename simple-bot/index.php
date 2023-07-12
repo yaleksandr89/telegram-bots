@@ -1,14 +1,17 @@
 <?php
 
-use SecondBot\EchoTelegramBot as SecondEchoTelegramBot;
-use GuzzleHttp\Client;
-
-if (file_exists('../../config.php')) {
-    include_once '../../config.php';
+if (file_exists('../config.php')) {
+    include_once '../config.php';
 } else {
     die('Please, created config file.');
 }
 
+use GuzzleHttp\Client;
+use SimpleBot\EchoTelegramBot;
+
+/** @var GuzzleHttp\Client $client */
+
+/** WORKS ONLY ON HOSTING OR VDS */
 try {
     function getRandImg(): array
     {
@@ -25,8 +28,6 @@ try {
 
         $chatId = $typeMessage['chat']['id'];
         $photoCommand = strtolower(trim($typeMessage['text']));
-
-        echo $typeMessage['text'] . PHP_EOL;
 
         if ('photo' === $photoCommand) {
             $telegramBot->sendPhoto(
@@ -51,30 +52,28 @@ try {
         }
     }
 
-    $echoTelegramBot = new SecondEchoTelegramBot(new Client(), FIRST_BOT_TOKEN, BASE_URL);
+    $echoTelegramBot = new EchoTelegramBot(new Client(), SIMPLE_BOT_TOKEN, BASE_URL);
 
-    /** DON'T USE AN INFINITE LOOP ON A REAL SERVER! */
-    while (true) {
-        // >>> getUpdates
-        $getUpdatesContent = $echoTelegramBot->getUpdates(true);
-        // getUpdates <<<
+    // >>> getUpdates
+    $update = json_decode(
+        file_get_contents('php://input'),
+        true
+    );
+    // getUpdates <<<
 
-        // >>> sendMessage
-        if (count($getUpdatesContent) > 0) {
-            foreach ($getUpdatesContent as $item) {
-                if (array_key_exists('message', $item)) {
-                    definedTypeMessage($echoTelegramBot, $item);
-                }
+    // >>> sendMessage
+    if (isset($update)) {
+        $echoTelegramBot->addToLogs($update);
 
-                if (array_key_exists('edited_message', $item)) {
-                    definedTypeMessage($echoTelegramBot, $item, true);
-                }
-            }
+        if (array_key_exists('message', $update)) {
+            definedTypeMessage($echoTelegramBot, $update);
         }
-        // sendMessage <<<
 
-        sleep(2);
+        if (array_key_exists('edited_message', $update)) {
+            definedTypeMessage($echoTelegramBot, $update, true);
+        }
     }
+    // sendMessage <<<
 } catch (Throwable $e) {
     file_put_contents(__DIR__ . '/try_catch_logs.txt', date('d.m.Y H:i:s') . PHP_EOL . print_r($e, true), FILE_APPEND);
 }
