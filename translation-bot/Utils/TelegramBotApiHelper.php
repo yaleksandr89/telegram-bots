@@ -5,6 +5,7 @@ namespace YaTranslationBot\Utils;
 use DateTime;
 use Telegram\Bot\Api as TelegramBotApi;
 use Telegram\Bot\Exceptions\TelegramSDKException;
+use Telegram\Bot\Objects\Message;
 use Telegram\Bot\Objects\Message as MessageObject;
 use Telegram\Bot\Objects\Update;
 
@@ -21,16 +22,29 @@ class TelegramBotApiHelper
     public static function definedTypeMessage(
         TelegramBotApi $telegram,
         Update $update,
-        bool $isEditMessage = false
+        string $nameArrMessage = 'message'
     ): MessageObject|bool {
-        if (isset($update['message'])) {
-            $typeMessage = ($isEditMessage === false) ? $update['message'] : $update['edited_message'];
-            $chatId = (int)$typeMessage['chat']['id'];
-            $incomingText = isset($typeMessage['text']) ? strtolower(trim($typeMessage['text'])) : '';
-        } else {
-            $typeMessage = '';
-            $incomingText = '';
-            $chatId = -1;
+        switch ($nameArrMessage) {
+            case 'message':
+                $typeMessage = $update['message'];
+                $chatId = (int)$typeMessage['chat']['id'];
+                $incomingText = isset($typeMessage['text']) ? strtolower(trim($typeMessage['text'])) : '';
+                break;
+            case 'edited_message':
+                $typeMessage = $update['edited_message'];
+                $chatId = (int)$typeMessage['chat']['id'];
+                $incomingText = isset($typeMessage['text']) ? strtolower(trim($typeMessage['text'])) : '';
+                break;
+            case 'callback_query':
+                $typeMessage = $update['callback_query'];
+                $chatId = (int)$typeMessage['message']['chat']['id'];
+                $incomingText = '';
+                break;
+            default:
+                $typeMessage = [];
+                $chatId = -1;
+                $incomingText = '';
+                break;
         }
 
         if ('/start' === $incomingText) {
@@ -39,7 +53,7 @@ class TelegramBotApiHelper
             $firstName = self::getFirstName($typeMessage);
             $lastName = self::getLastName($typeMessage);
             $username = self::getUsername($typeMessage);
-            $date = self::getDate($typeMessage);
+            $date = self::getTimestampToDateTime($typeMessage);
 
             if (null === $data) {
                 db()->setChat(
@@ -54,7 +68,6 @@ class TelegramBotApiHelper
                 $lang = $data['lang'];
             }
 
-
             $response = self::sendMessage(
                 telegram: $telegram,
                 chatId: $chatId,
@@ -62,60 +75,59 @@ class TelegramBotApiHelper
                 additionalParams: [
                     'parse_mode' => 'Markdown',
                     'reply_markup' => self::preparedSelectedKeyboards(
-                        keyBoards: self::inlineKeyboardsForStartCommand($lang),
+                        keyBoards: self::getInlineKeyboardForTranslationBot($lang),
                         inlineKeyboards: true
                     )
                 ]
             );
-        }
+        } elseif ('callback_query' === $nameArrMessage) {
+            $btnInlineKeyBoard = $typeMessage['message']['reply_markup']['inline_keyboard'][0];
+            $now = new DateTime();
+            $nowStr = $now->format('Y-m-d H:i:s');
 
-//        elseif ('Убрать клавиатуру' === $incomingText) {
-//            $response = self::sendMessage(
-//                telegram: $telegram,
-//                chatId: $chatId,
-//                message: 'Клавиатура убрана',
-//                additionalParams: [
-//                    'reply_markup' => self::removeSelectedKeyboard()
-//                ]
-//            );
-//        }
-//
-//        elseif ('Открыть продвинутую клавиатуру' === $incomingText) {
-//            $response = self::sendMessage(
-//                telegram: $telegram,
-//                chatId: $chatId,
-//                message: 'Переключаюсь на продвинутую клавиатуру...',
-//                additionalParams: [
-//                    'parse_mode' => 'Markdown',
-//                    'reply_markup' => self::preparedSelectedKeyboards(
-//                        self::complexKeyboards(),
-//                        [
-//                            'resize_keyboard' => true,
-//                            'one_time_keyboard' => true,
-//                            'input_field_placeholder' => 'Выберите нужную команду'
-//                        ]
-//                    )
-//                ]
-//            );
-//        }
-//
-//        elseif ('Вернуться на стартовую клавиатуру' === $incomingText) {
-//            $response = self::sendMessage(
-//                telegram: $telegram,
-//                chatId: $chatId,
-//                message: 'Возвращаюсь назад...',
-//                additionalParams: [
-//                    'parse_mode' => 'Markdown',
-//                    'reply_markup' => self::preparedSelectedKeyboards(
-//                        self::simpleKeyboardsWithComplexBtn(),
-//                        [
-//                            'resize_keyboard' => true,
-//                            'one_time_keyboard' => true,
-//                        ]
-//                    )
-//                ]
-//            );
-//        }
+            foreach ($btnInlineKeyBoard as $btn) {
+                $isoCode = match ($btn['text']) {
+                    'Русский', 'Russian' => 'ru',
+                    'English', 'Английский' => 'en',
+                    default => '',
+                };
+
+                if ($isoCode === $typeMessage['data']) {
+                    db()->updateChat(
+                        $chatId,
+                        $typeMessage['data'],
+                        $nowStr,
+                    );
+
+                    $telegram->answerCallbackQuery(['callback_query_id' => $typeMessage['id']]);
+
+                    $response = self::sendMessage(
+                        telegram: $telegram,
+                        chatId: $chatId,
+                        message: 'Можете вводить слово для перевода с выбранного языка',
+                        additionalParams: [
+                            'parse_mode' => 'Markdown',
+                            'reply_markup' => self::preparedSelectedKeyboards(
+                                keyBoards: self::getInlineKeyboardForTranslationBot($typeMessage['data']),
+                                inlineKeyboards: true
+                            )
+                        ]
+                    );
+
+                    break;
+                }
+            }
+
+            $telegram->answerCallbackQuery([
+                'callback_query_id' => $typeMessage['id'],
+                'text' => 'Это уже активный язык',
+                'show_alert' => false, // Вызывает модальное окно, требуется клик/тап, что бы убрать
+            ]);
+
+            $response = true;
+        } else {
+            $response = false;
+        }
 
         return $response;
     }
@@ -209,7 +221,7 @@ class TelegramBotApiHelper
         return array_key_exists('username', $chat) ? $chat['username'] : '';
     }
 
-    private static function getDate(array $typeMessage): string
+    private static function getTimestampToDateTime(array $typeMessage): string
     {
         $date = new DateTime();
         $date->setTimestamp($typeMessage['date']);

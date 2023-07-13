@@ -46,27 +46,27 @@ trait DifferentTypesKeyboards
     // SIMPLE KEYBOARDS <<<
 
     // >>> INLINE KEYBOARDS
-    protected static function inlineKeyboardsForStartCommand(string $lang): array
+    protected static function getInlineKeyboardForTranslationBot(string $lang): array
     {
         if ('ru' === $lang) {
             $buttons = [
                 [
-                    'text' => 'Английский [🇺🇸]',
+                    'text' => 'Английский',
                     'callback_data' => 'en',
                 ],
                 [
-                    'text' => 'Русский [🇷🇺]',
+                    'text' => '☑️ Русский',
                     'callback_data' => 'ru',
                 ],
             ];
         } else {
             $buttons = [
                 [
-                    'text' => 'English 🇺🇸',
+                    'text' => '☑️ English',
                     'callback_data' => 'en',
                 ],
                 [
-                    'text' => 'Russian 🇷🇺',
+                    'text' => 'Russian',
                     'callback_data' => 'ru',
                 ],
             ];

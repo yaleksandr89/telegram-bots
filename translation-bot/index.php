@@ -19,11 +19,11 @@ try {
 
     // >>> sendMessage
     if ($update->count() > 0) {
-        if (array_key_exists('edited_message', $update->getRawResponse())) {
-            $response = Helper::definedTypeMessage($telegram, $update, true);
-        } else {
-            $response = Helper::definedTypeMessage($telegram, $update);
-        }
+        $response = match (true) {
+            array_key_exists('edited_message', $update->getRawResponse()) => Helper::definedTypeMessage($telegram, $update, 'edited_message'),
+            array_key_exists('callback_query', $update->getRawResponse()) => Helper::definedTypeMessage($telegram, $update, 'callback_query'),
+            default => Helper::definedTypeMessage($telegram, $update),
+        };
     }
     // sendMessage <<<
 } catch (Throwable $e) {
