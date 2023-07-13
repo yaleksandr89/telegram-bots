@@ -30,4 +30,4 @@ try {
     file_put_contents(__DIR__ . '/try_catch_logs.txt', date('d.m.Y H:i:s') . PHP_EOL . print_r($e, true), FILE_APPEND);
 }
 
-die('Silence is golden');
+//die('Silence is golden');

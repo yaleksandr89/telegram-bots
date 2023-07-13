@@ -12,7 +12,7 @@
     "psr-4": {
       "SimpleBot\\": "simple-bot/",
       "TbaPhpSdk\\": "tba-php-sdk/",
-      "YaTranslationBot\\": "translation-bot/"
+      "YaTranslationBot\\": "translation-bot-v1/"
     }
   }
 }
