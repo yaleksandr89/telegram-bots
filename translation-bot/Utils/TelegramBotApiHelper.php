@@ -132,7 +132,6 @@ class TelegramBotApiHelper
             $source = ($data['lang'] === 'en') ? 'en' : 'ru';
             $target = ($data['lang'] === 'ru') ? 'en' : 'ru';
             $attempts = 5;
-            $text = 'Fuck the police';
 
             $result = GoogleTranslateForFree::translate($source, $target, trim($incomingText), $attempts);
 
@@ -141,7 +140,7 @@ class TelegramBotApiHelper
                     'chatId' => $data['chat_id'],
                     'full_name' => $data['first_name'] . ' ' . $data['last_name'],
                     'username' => $data['username'],
-                    'textToTranslate' => $text,
+                    'textToTranslate' => $incomingText,
                     'translatedText' => $result,
                 ],
                 __DIR__ . '/../translations.txt'
@@ -161,7 +160,11 @@ class TelegramBotApiHelper
                 );
             }
         } else {
-            $response = false;
+            $response = self::sendMessage(
+                telegram: $telegram,
+                chatId: $chatId,
+                message: 'Бот умеет работать только с текстом',
+            );
         }
 
         return $response;
