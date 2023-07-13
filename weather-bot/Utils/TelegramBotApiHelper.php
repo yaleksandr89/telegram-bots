@@ -9,6 +9,7 @@ use Telegram\Bot\Objects\Message;
 use Telegram\Bot\Objects\Message as MessageObject;
 use Telegram\Bot\Objects\Update;
 use GuzzleHttp\Client;
+use Telegram\Bot\FileUpload\InputFile;
 
 class TelegramBotApiHelper
 {
@@ -47,19 +48,31 @@ class TelegramBotApiHelper
                 ]
             );
         } elseif ('' !== $incomingText) {
-            $response = self::sendMessage(
-                telegram: $telegram,
-                chatId: $chatId,
-                message: self::getResponseToOpenWeatherApi('GET', $incomingText),
-                additionalParams: [
-                    'parse_mode' => 'HTML'
-                ]
-            );
+            $result = self::getResponseToOpenWeatherApi('GET', $incomingText);
+
+            if ('error' === $result['status']) {
+                $response = self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: $result['text'],
+                    additionalParams: [
+                        'parse_mode' => 'HTML'
+                    ]
+                );
+            } else {
+                $response = $telegram->sendPhoto([
+                    'chat_id' => $chatId,
+                    'photo' => InputFile::create('https://openweathermap.org/img/wn/' . $result['icon'] .'@4x.png'),
+                    'caption' => $result['text'],
+                    'parse_mode' => 'HTML',
+                ]);
+            }
+
         } else {
             $response = self::sendMessage(
                 telegram: $telegram,
                 chatId: $chatId,
-                message: '...',
+                message: 'Что-то пошло не так -_-',
             );
         }
 
@@ -153,14 +166,18 @@ class TelegramBotApiHelper
     private static function getResponseToOpenWeatherApi(
         string $method,
         string $city
-    ): string {
+    ): array {
         if (str_contains($city, ',')) {
             $cityWithCode = explode(',', $city);
-            [$nameCity, $lang] = $cityWithCode;
+            [$nameCity, $code] = $cityWithCode;
+            $nameCity .= ',' . $code;
         } else {
             $nameCity = $city;
-            $lang = 'ru';
+            $code = 'ru';
         }
+
+        $units =  ('ru' === $code) ? 'metric' : 'imperial';
+        $weatherSymbol = ('ru' === $code) ? '℃' : '℉' ;
 
         $response = (new Client())->request(
             $method,
@@ -169,8 +186,8 @@ class TelegramBotApiHelper
                 'query' => [
                     'appid' => OPEN_WEATHER_MAP_TOKEN,
                     'q' => trim($nameCity),
-                    'units' => 'metric',
-                    'lang' => trim($lang),
+                    'units' => $units,
+                    'lang' => trim($code),
                 ],
                 'http_errors' => false
             ]
@@ -192,7 +209,11 @@ class TelegramBotApiHelper
                     ],
                     __DIR__ . '/../open-weather-api-error.txt'
                 );
-                $responseTxt = 'Проблема с доступом к сервису "Open Weather"';
+                $response = [
+                    'status' => 'error',
+                    'text' => 'Проблема с доступом к сервису "Open Weather"',
+                    'icon' => null,
+                ];
                 break;
             case 404:
                 self::writeToLogs(
@@ -205,7 +226,11 @@ class TelegramBotApiHelper
                     ],
                     __DIR__ . '/../open-weather-api-error.txt'
                 );
-                $responseTxt = 'Город не найден';
+                $response = [
+                    'status' => 'error',
+                    'text' => 'Город не найден',
+                    'icon' => null,
+                ];
                 break;
             case 200:
                 self::writeToLogs(
@@ -217,17 +242,25 @@ class TelegramBotApiHelper
                     ],
                     __DIR__ . '/../open-weather-api-response.txt'
                 );
-                //$responseTxt = '<pre>'.print_r($decodeResponse, true).'</pre>';
-                $responseTxt = <<< OPEN_WEATHER_RESPONSE
-                Город <code>{$decodeResponse['name']}</code> найден 👍
-                    🔸️ ID в сервисе OpenWeather: <code>{$decodeResponse['id']}</code>
-                    🔸️ Координаты: <code>{$decodeResponse['coord']['lon']}, {$decodeResponse['coord']['lat']}</code>
+                $weatherMain = $decodeResponse['main'];
+                $weatherMainTemp = round($weatherMain['temp']);
 
-                Информация о погоде:
-                    🔸️ ...
-                    🔸️ ...
-                    🔸️ ...
+                $text = <<< OPEN_WEATHER_RESPONSE
+                🔸️ ID в сервисе OpenWeather: <code>{$decodeResponse['id']}</code>
+                🔸️ Страна: <code>{$decodeResponse['sys']['country']}</code>
+                🔸️ Город: <code>{$decodeResponse['name']}</code>
+                🔸️ Координаты: <code>{$decodeResponse['coord']['lon']},{$decodeResponse['coord']['lat']}</code>
+
+                Информация о погоде: 
+                    🔸️ Состояние: {$decodeResponse['weather'][0]['description']}
+                    🔸️ Температура: {$weatherMainTemp}$weatherSymbol
+                    🔸️ Влажность: {$weatherMain['humidity']}%
                 OPEN_WEATHER_RESPONSE;
+                $response = [
+                    'status' => 'success',
+                    'text' => $text,
+                    'icon' => $decodeResponse['weather'][0]['icon'],
+                ];
                 break;
             default:
                 self::writeToLogs(
@@ -241,10 +274,14 @@ class TelegramBotApiHelper
                     ],
                     __DIR__ . '/../open-weather-api-error.txt'
                 );
-                $responseTxt = 'Бот временно не доступен, повторите попытку позднее';
+                $response = [
+                    'status' => 'error',
+                    'text' => 'Бот временно не доступен, повторите попытку позднее',
+                    'icon' => null,
+                ];
                 break;
         }
 
-        return $responseTxt;
+        return $response;
     }
 }
