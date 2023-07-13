@@ -1,6 +1,7 @@
 <?php
 
-/** RENAME THIS FILE TO config.php */
+/** Переименовать в config.php */
+/** Выполнить composer i */
 
 require_once 'vendor/autoload.php';
 
@@ -11,26 +12,35 @@ require_once 'vendor/autoload.php';
  */
 const BASE_URL = 'https://api.telegram.org/bot';
 
-
-// >>> Token for local telegram bots
-/**
- * Токен используется для ботов из директории: local
-*/
-const FIRST_BOT_TOKEN = '...';
-// Token for local telegram bots <<<
-
-
-// >>> Token for remote telegram bots
 /**
  * Логин: ...
  *
- * Привязка URL к вебхуку:
- * echo BASE_URL  . EXAMPLE_TOKEN . '/setWebhook?url={{ URL YOUR SITE, https - required }}';
+ * Привязка URL к вебхука:
  * https://api.telegram.org/bot{{EXAMPLE_TOKEN }}/setWebhook?url={{ URL YOUR SITE, https - required }}
  *
  * Проверка статуса вебхука:
- * https://api.telegram.org/bot{{EXAMPLE_TOKEN }}/getWebhookInfo?url={{ URL YOUR SITE, https - required }}
+ * https://api.telegram.org/bot{{EXAMPLE_TOKEN }}/getWebhookInfo
+ *
+ * Удалить вебхук:
+ * https://api.telegram.org/bot{{EXAMPLE_TOKEN }}/setWebhook
 */
-const SIMPLE_BOT_TOKEN = '...'; // Токен используется для ботов из директории: remote/echo-bot
-const TBA_PHP_SDK_TOKEN = '...'; // Токен используется для ботов из директории: remote/tba-php-sdk
-// Token for remote telegram bots <<<
+const EXAMPLE_TOKEN = '...'; // Токен (создается в BotFather)
+
+// Для подключения к БД (используется в некоторых ботах, например бот переводчик)
+const PARAMS_DB = [
+    'type' => 'mysql',
+    'host' => 'localhost',
+    'name' => '{DB_NAME}',
+    'port' => '{DB_PORT}',
+    'user' => '{DB_USER}',
+    'password' => '{DB_PASSWORD}',
+    'options' => [
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        //PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION // формирование исключений для PHP < v.8
+    ],
+];
+
+function db(): DB
+{
+    return DB::getInstance()->getConnection(PARAMS_DB);
+}
