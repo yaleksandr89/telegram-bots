@@ -3,6 +3,7 @@
 namespace YaTranslationBot\Utils;
 
 use DateTime;
+use Dejurin\GoogleTranslateForFree;
 use Telegram\Bot\Api as TelegramBotApi;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\Objects\Message;
@@ -104,7 +105,7 @@ class TelegramBotApiHelper
                     $response = self::sendMessage(
                         telegram: $telegram,
                         chatId: $chatId,
-                        message: 'Можете вводить слово для перевода с выбранного языка',
+                        message: 'Можете вводить слово или фразу для перевода с выбранного языка',
                         additionalParams: [
                             'parse_mode' => 'Markdown',
                             'reply_markup' => self::preparedSelectedKeyboards(
@@ -125,6 +126,40 @@ class TelegramBotApiHelper
             ]);
 
             $response = true;
+        } elseif ('' !== $incomingText) {
+            $data = db()->getChatId($chatId);
+
+            $source = ($data['lang'] === 'en') ? 'en' : 'ru';
+            $target = ($data['lang'] === 'ru') ? 'en' : 'ru';
+            $attempts = 5;
+            $text = 'Fuck the police';
+
+            $result = GoogleTranslateForFree::translate($source, $target, trim($incomingText), $attempts);
+
+            self::writeToLogs(
+                [
+                    'chatId' => $data['chat_id'],
+                    'full_name' => $data['first_name'] . ' ' . $data['last_name'],
+                    'username' => $data['username'],
+                    'textToTranslate' => $text,
+                    'translatedText' => $result,
+                ],
+                __DIR__ . '/../translations.txt'
+            );
+
+            if ($result) {
+                $response = self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: $result,
+                );
+            } else {
+                $response = self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: 'Сервис временно недоступен, попробуйте повторить позже',
+                );
+            }
         } else {
             $response = false;
         }
