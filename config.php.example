@@ -26,6 +26,13 @@ const BASE_URL = 'https://api.telegram.org/bot';
 */
 const EXAMPLE_TOKEN = '...'; // Токен (создается в BotFather)
 
+
+
+// Для бота синоптика, помимо токена в самом телеграмме необходимо получить токен в сервисе OpenWeather(нужно зарегистрировать).
+// Пример запроса: https://api.openweathermap.org/data/2.5/weather?appid={OPEN_WEATHER_MAP_TOKEN}&lang=ru&q=Санкт-Петербург&units=metric
+
+
+
 // Для подключения к БД (используется в некоторых ботах, например бот переводчик)
 const PARAMS_DB = [
     'type' => 'mysql',
