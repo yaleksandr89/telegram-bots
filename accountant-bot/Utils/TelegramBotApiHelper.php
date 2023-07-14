@@ -10,6 +10,8 @@ use Telegram\Bot\Objects\Update;
 
 class TelegramBotApiHelper
 {
+    use DifferentTypesKeyboards;
+
     /**
      * @throws TelegramSDKException
      *
@@ -27,44 +29,57 @@ class TelegramBotApiHelper
             'incomingText' => $incomingText,
         ] = self::getDataForWork($update, $nameArrMessage);
 
-        self::writeToLogs(
-            [
-                'typeMessage' => $typeMessage,
-                'chatId' => $chatId,
-                'incomingText' => $incomingText,
-            ],
-            __DIR__ . '/../test.txt'
-        );
-        die;
+        switch ($incomingText) {
+            case '/start':
+                $message = <<< MESSAGE
+                Привет!
+                Я бот помогающий следить за твоими финансами и домашней бухгалтерией.
+                Если тебе потребуется справочная информация:
+                 * Отправь команду <b>/help</b>
+                 * Нажми соответствующую кнопку на клавиатуре 
+                MESSAGE;
 
-        if ('/start' === $incomingText) {
-            $message = <<< MESSAGE
-            ...
-            MESSAGE;
+                $response = self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: $message,
+                    additionalParams: [
+                        'parse_mode' => 'HTML',
+                        'reply_markup' => self::preparedSelectedKeyboards(
+                            keyBoards: self::startKeyboard(),
+                            additionalParams: [
+                                'resize_keyboard' => true,
+                            ]
+                        )
+                    ]
+                );
+                break;
+            case '/help':
+            case 'Справочная информация' === $incomingText:
+                $message = <<< MESSAGE
+                Для ведения учета просто добавьте свой доход или расход в следующем формате: <code>Тип: сумма - категория</code>
+                
+                <b>Примеры команд:</b>
+                    * Доход: 1000 - Зарплата
+                    * Расход: 1000 - Коммунальные услуги
+                MESSAGE;
 
-            $response = self::sendMessage(
-                telegram: $telegram,
-                chatId: $chatId,
-                message: $message,
-                additionalParams: [
-                    'parse_mode' => 'HTML'
-                ]
-            );
-        } elseif ('' !== $incomingText) {
-            $response = self::sendMessage(
-                telegram: $telegram,
-                chatId: $chatId,
-                message: '...',
-                additionalParams: [
-                    'parse_mode' => 'HTML'
-                ]
-            );
-        } else {
-            $response = self::sendMessage(
-                telegram: $telegram,
-                chatId: $chatId,
-                message: 'Что-то пошло не так -_-',
-            );
+                $response = self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: $message,
+                    additionalParams: [
+                        'parse_mode' => 'HTML',
+                    ]
+                );
+                break;
+            default:
+                $response = self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: 'Что-то пошло не так -_-',
+                );
+                break;
         }
 
         return $response;

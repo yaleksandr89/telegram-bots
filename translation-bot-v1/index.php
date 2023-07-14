@@ -7,9 +7,15 @@ if (file_exists('../config.php')) {
 }
 
 use Telegram\Bot\Api as TelegramBotApi;
+use YaTranslationBot\DB;
 use YaTranslationBot\Utils\TelegramBotApiHelper as Helper;
 
 try {
+    function db(): DB
+    {
+        return DB::getInstance()->getConnection(PARAMS_DB_TRANSLATION);
+    }
+
     $telegram = new TelegramBotApi(YA_TRANSLATION_BOT);
 
     // >>> getUpdates

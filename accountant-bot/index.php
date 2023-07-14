@@ -6,11 +6,17 @@ if (file_exists('../config.php')) {
     die('Please, created config file.');
 }
 
-use Telegram\Bot\Api as TelegramBotApi;
 use AccountantBot\Utils\TelegramBotApiHelper as Helper;
+use Telegram\Bot\Api as TelegramBotApi;
+use YaTranslationBot\DB;
 
 try {
-    $telegram = new TelegramBotApi(YA_WEATHER_BOT);
+    function db(): DB
+    {
+        return DB::getInstance()->getConnection(PARAMS_DB_ACCOUNTANT);
+    }
+
+    $telegram = new TelegramBotApi(YA_ACCOUNTANT_BOT);
 
     // >>> getUpdates
     $update = $telegram->getWebhookUpdate();
@@ -30,4 +36,4 @@ try {
     file_put_contents(__DIR__ . '/try_catch_logs.txt', date('d.m.Y H:i:s') . PHP_EOL . print_r($e, true), FILE_APPEND);
 }
 
-//die('Silence is golden');
+die('Silence is golden');
