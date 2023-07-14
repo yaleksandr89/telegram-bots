@@ -204,14 +204,12 @@ class TelegramBotApiHelper
             $nameCity = $city;
             $code = $fromLang;
         }
-        $units = ('ru' === $code) ? 'metric' : 'imperial';
-
 
         $responseFromOpenWeather = self::getResponseFromOpenWeather($method, [
             'query' => [
                 'appid' => OPEN_WEATHER_MAP_TOKEN,
                 'q' => trim($nameCity),
-                'units' => $units,
+                'units' => ('ru' === $code) ? 'metric' : 'imperial',
                 'lang' => trim($code),
             ],
         ]);
@@ -303,6 +301,8 @@ class TelegramBotApiHelper
                 'appid' => OPEN_WEATHER_MAP_TOKEN,
                 'lat' => trim($location['latitude']),
                 'lon' => trim($location['longitude']),
+                'units' => ('ru' === $fromLang) ? 'metric' : 'imperial',
+                'lang' => trim($fromLang),
             ],
         ]);
 
