@@ -13,7 +13,8 @@
       "SimpleBot\\": "simple-bot/",
       "TbaPhpSdk\\": "tba-php-sdk/",
       "YaTranslationBot\\": "translation-bot-v1/",
-      "YaTranslationBotV2\\": "translation-bot-v2/"
+      "YaTranslationBotV2\\": "translation-bot-v2/",
+      "WeatherBot\\": "weather-bot/"
     }
   }
 }
