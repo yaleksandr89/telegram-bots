@@ -8,11 +8,14 @@ trait DifferentTypesKeyboards
 {
     protected static function startKeyboard(): array
     {
+        $nameMonth = getNameMonthByNumber(date('n'));
+        $currentDate = date('d.m.Y');
+
         return [
             ['Справочная информация', 'Категории доходов', 'Категории расходов', 'Все категории',],
-            ['Доходы за сегодня', 'Доходы за текущий месяц',],
-            ['Расходы за сегодня', 'Расходы за текущий месяц',],
-            ['Итого за сегодня', 'Итого за текущий месяц',],
+            ['Доходы за ' . $currentDate, 'Доходы за ' . $nameMonth,],
+            ['Расходы за ' . $currentDate, 'Расходы за ' . $nameMonth,],
+            ['Итого за ' . $currentDate, 'Итого за ' . $nameMonth,],
         ];
     }
 

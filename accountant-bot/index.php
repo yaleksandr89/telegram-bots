@@ -6,11 +6,31 @@ if (file_exists('../config.php')) {
     die('Please, created config file.');
 }
 
+use AccountantBot\Utils\DB;
 use AccountantBot\Utils\TelegramBotApiHelper as Helper;
 use Telegram\Bot\Api as TelegramBotApi;
-use AccountantBot\Utils\DB;
 
 try {
+    function getNameMonthByNumber(int $numberMonth): string
+    {
+        $months = [
+            'январь',
+            'февраль',
+            'март',
+            'апрель',
+            'май',
+            'июнь',
+            'июль',
+            'август',
+            'сентябрь',
+            'октябрь',
+            'ноябрь',
+            'декабрь'
+        ];
+
+        return $months[$numberMonth - 1];
+    }
+
     function db(): DB
     {
         return DB::getInstance()->getConnection(PARAMS_DB_ACCOUNTANT);

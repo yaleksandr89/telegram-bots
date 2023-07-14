@@ -163,7 +163,7 @@ final class DB
         return true;
     }
 
-    public function getFinanceInfoForTodayWithoutCategories(?int $typeId = null): ?array
+    public function getFinanceInfoForTodayWithoutCategories(int $typeId): ?array
     {
         $sql = <<< SQL
                 SELECT SUM(amount) AS amount
@@ -186,6 +186,40 @@ final class DB
                 FROM `telegram_accountant_bot`.`finance` AS f
                 LEFT JOIN `telegram_accountant_bot`.`finance_cats` AS fc ON f.category_id = fc.id
                 WHERE f.type_id = :typeId AND DATE(f.created_at) = CURRENT_DATE()
+                GROUP BY category;
+                SQL;
+
+        return $this
+            ->query(
+                $sql,
+                ['typeId' => $typeId]
+            )
+            ->findAll();
+    }
+
+    public function getFinanceInfoForMonthWithoutCategories(int $typeId): ?array
+    {
+        $sql = <<< SQL
+                SELECT SUM(amount) AS amount
+                FROM `telegram_accountant_bot`.`finance`
+                WHERE type_id = :typeId AND (YEAR(created_at) = YEAR(CURRENT_DATE) AND MONTH(created_at) = MONTH(CURRENT_DATE));
+                SQL;
+
+        return $this
+            ->query(
+                $sql,
+                ['typeId' => $typeId]
+            )
+            ->find();
+    }
+
+    public function getFinanceInfoForMonthWithCategories(int $typeId): array
+    {
+        $sql = <<< SQL
+                SELECT fc.title AS category, SUM(f.amount) AS amount
+                FROM `telegram_accountant_bot`.`finance` AS f
+                LEFT JOIN `telegram_accountant_bot`.`finance_cats` AS fc ON f.category_id = fc.id
+                WHERE f.type_id = :typeId AND (YEAR(created_at) = YEAR(CURRENT_DATE) AND MONTH(created_at) = MONTH(CURRENT_DATE))
                 GROUP BY category;
                 SQL;
 

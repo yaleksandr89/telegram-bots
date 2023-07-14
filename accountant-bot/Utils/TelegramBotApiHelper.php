@@ -29,6 +29,9 @@ class TelegramBotApiHelper
             'incomingText' => $incomingText,
         ] = self::getDataForWork($update, $nameArrMessage);
 
+        $nameMonth = getNameMonthByNumber(date('n'));
+        $currentDate = date('d.m.Y');
+
         switch ($incomingText) {
             case '/start':
                 $message = <<< MESSAGE
@@ -57,11 +60,11 @@ class TelegramBotApiHelper
             case '/help':
             case 'Справочная информация' === $incomingText:
                 $message = <<< MESSAGE
-                Для ведения учета просто добавьте свой доход или расход в следующем формате: <code>Тип: сумма - категория</code>
+                Для ведения учета просто добавьте свой доход или расход в следующем формате: <u>Тип: сумма - категория</u>
                 
                 <b>Примеры команд:</b>
-                    * Доход: 1000 - Зарплата
-                    * Расход: 1000 - Коммунальные услуги
+                  <code>Доход: 1000 - Зарплата</code>
+                  <code>Расход: 1000 - Коммунальные услуги</code>
                 MESSAGE;
 
                 $response = self::sendMessage(
@@ -129,17 +132,17 @@ class TelegramBotApiHelper
                     ]
                 );
                 break;
-            case 'Доходы за сегодня' === $incomingText:
+            case 'Доходы за ' . $currentDate === $incomingText:
                 $response = self::sendMessage(
                     telegram: $telegram,
                     chatId: $chatId,
-                    message: self::getFinanceTodayWithCategory(2, 'Доходы за сегодня'),
+                    message: self::getFinanceTodayWithCategory(2, 'Доходы за ' . $currentDate),
                     additionalParams: [
                         'parse_mode' => 'HTML',
                     ]
                 );
                 break;
-            case 'Расходы за сегодня' === $incomingText:
+            case 'Расходы за ' . $currentDate === $incomingText:
                 $response = self::sendMessage(
                     telegram: $telegram,
                     chatId: $chatId,
@@ -149,7 +152,7 @@ class TelegramBotApiHelper
                     ]
                 );
                 break;
-            case 'Итого за сегодня' === $incomingText:
+            case 'Итого за ' . $currentDate === $incomingText:
                 $dbIncomesToday = db()->getFinanceInfoForTodayWithoutCategories(2);
                 $incomesToday = (null !== $dbIncomesToday) ? $dbIncomesToday['amount'] : 0;
 
@@ -161,7 +164,45 @@ class TelegramBotApiHelper
                 $response = self::sendMessage(
                     telegram: $telegram,
                     chatId: $chatId,
-                    message: "<b>Итог за сегодня</b>: $resultToday",
+                    message: "<b>Итог за $currentDate</b>: $resultToday",
+                    additionalParams: [
+                        'parse_mode' => 'HTML',
+                    ]
+                );
+                break;
+            case 'Доходы за ' . $nameMonth === $incomingText:
+                $response = self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: self::getFinanceMonthWithCategory(2, 'Доходы за ' . $nameMonth),
+                    additionalParams: [
+                        'parse_mode' => 'HTML',
+                    ]
+                );
+                break;
+            case 'Расходы за ' . $nameMonth === $incomingText:
+                $response = self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: self::getFinanceMonthWithCategory(1, 'Расходы за ' . $nameMonth),
+                    additionalParams: [
+                        'parse_mode' => 'HTML',
+                    ]
+                );
+                break;
+            case 'Итого за ' . $nameMonth === $incomingText:
+                $dbIncomesMonth = db()->getFinanceInfoForMonthWithoutCategories(2);
+                $incomesMonth = (null !== $dbIncomesMonth) ? $dbIncomesMonth['amount'] : 0;
+
+                $dbExpensesToday = db()->getFinanceInfoForMonthWithoutCategories(1);
+                $expensesMonth = (null !== $dbExpensesToday) ? $dbExpensesToday['amount'] : 0;
+
+                $resultMonth = $incomesMonth - $expensesMonth;
+
+                $response = self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: "<b>Итог за $nameMonth</b>: $resultMonth",
                     additionalParams: [
                         'parse_mode' => 'HTML',
                     ]
@@ -171,7 +212,7 @@ class TelegramBotApiHelper
                 $response = self::sendMessage(
                     telegram: $telegram,
                     chatId: $chatId,
-                    message: 'Что-то пошло не так -_-',
+                    message: "Указан неверный формат для записи.\r\nОбратитесь к /help для ознакомления с примерами команд.",
                 );
                 break;
         }
@@ -306,7 +347,30 @@ class TelegramBotApiHelper
         $message = "<u>$header</u>\r\n";
         $total = 0;
         foreach ($result as $categoryName => $amountByCategory) {
-            $message .= "    * $categoryName - $amountByCategory\r\n";
+            $message .= "  * $categoryName - $amountByCategory\r\n";
+            $total += $amountByCategory;
+        }
+        if (0 !== $total) {
+            $message .= "\r\n<b>Всего: $total</b>";
+        } else {
+            $message .= "<b>отсутствуют</b>";
+        }
+
+        return $message;
+    }
+
+    private static function getFinanceMonthWithCategory(int $typeId, string $header): string
+    {
+        $financeMonthWithCategoryData = db()->getFinanceInfoForMonthWithCategories($typeId);
+        $categories = array_column($financeMonthWithCategoryData, 'category');
+        $amounts = array_column($financeMonthWithCategoryData, 'amount');
+
+        $result = array_combine($categories, $amounts);
+
+        $message = "<u>$header</u>\r\n";
+        $total = 0;
+        foreach ($result as $categoryName => $amountByCategory) {
+            $message .= "  * $categoryName - $amountByCategory\r\n";
             $total += $amountByCategory;
         }
         if (0 !== $total) {
