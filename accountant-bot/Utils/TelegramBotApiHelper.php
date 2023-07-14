@@ -29,6 +29,14 @@ class TelegramBotApiHelper
             'incomingText' => $incomingText,
         ] = self::getDataForWork($update, $nameArrMessage);
 
+        if (FROM_ID !== $typeMessage['from']['id']) {
+            return self::sendMessage(
+                telegram: $telegram,
+                chatId: $chatId,
+                message: "В доступе отказано! 🚫\r\nЭто приватный бот."
+            );
+        }
+
         $nameMonth = getNameMonthByNumber(date('n'));
         $currentDate = date('d.m.Y');
 
