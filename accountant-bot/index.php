@@ -8,7 +8,7 @@ if (file_exists('../config.php')) {
 
 use AccountantBot\Utils\TelegramBotApiHelper as Helper;
 use Telegram\Bot\Api as TelegramBotApi;
-use YaTranslationBot\DB;
+use AccountantBot\Utils\DB;
 
 try {
     function db(): DB

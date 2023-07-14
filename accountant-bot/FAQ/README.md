@@ -1,8 +1,14 @@
+**finance_cats**
+
+* type - если 0 - категория расхода, если 1 - категория дохода.
+
+---
+
 1. Создание таблицы `finance` в БД `telegram_accountant`:
 
 ```sql
-DROP TABLE IF EXISTS `telegram_accountant-bot`.`finance`;
-CREATE TABLE `telegram_accountant-bot`.`finance`
+DROP TABLE IF EXISTS `telegram_accountant_bot`.`finance`;
+CREATE TABLE `telegram_accountant_bot`.`finance`
 (
     `id`            INT UNSIGNED        NOT NULL AUTO_INCREMENT,
     `amount`        DOUBLE              NOT NULL,
@@ -18,8 +24,8 @@ CREATE TABLE `telegram_accountant-bot`.`finance`
 2. Создание таблицы `finance_cats` в БД `telegram_accountant`:
 
 ```sql
-DROP TABLE IF EXISTS `telegram_accountant-bot`.`finance_cats`;
-CREATE TABLE `telegram_accountant-bot`.`finance_cats`
+DROP TABLE IF EXISTS `telegram_accountant_bot`.`finance_cats`;
+CREATE TABLE `telegram_accountant_bot`.`finance_cats`
 (
     `id`            INT UNSIGNED        NOT NULL AUTO_INCREMENT,
     `title`         VARCHAR(510)              NOT NULL,
@@ -30,10 +36,10 @@ CREATE TABLE `telegram_accountant-bot`.`finance_cats`
     ENGINE = InnoDB;
 ```
 
-3. Наполнение таблицы `telegram_accountant-bot`.`finance_cats` данными
+3. Наполнение таблицы `telegram_accountant_bot`.`finance_cats` данными
 
 ```sql
-INSERT INTO `telegram_accountant-bot`.`finance_cats` (`id`, `title`, `type`) VALUES
+INSERT INTO `telegram_accountant_bot`.`finance_cats` (`id`, `title`, `type`) VALUES
 (1, 'Зарплата', 1),
 (2, 'Другие', 1),
 (3, 'Жилье', 0),

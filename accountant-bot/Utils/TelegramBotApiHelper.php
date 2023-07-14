@@ -73,6 +73,42 @@ class TelegramBotApiHelper
                     ]
                 );
                 break;
+            case 'Все категории' === $incomingText:
+                $allCategories = db()->getAllCategories();
+
+                $response = self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: self::prepareCategoriesForResponse($allCategories),
+                    additionalParams: [
+                        'parse_mode' => 'HTML',
+                    ]
+                );
+                break;
+            case 'Категории доходов' === $incomingText:
+                $incomeCategories = db()->getCategoriesForType(1);
+
+                $response = self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: self::prepareCategoriesForResponse($incomeCategories),
+                    additionalParams: [
+                        'parse_mode' => 'HTML',
+                    ]
+                );
+                break;
+            case 'Категории расходов' === $incomingText:
+                $expenseCategories = db()->getCategoriesForType(0);
+
+                $response = self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: self::prepareCategoriesForResponse($expenseCategories),
+                    additionalParams: [
+                        'parse_mode' => 'HTML',
+                    ]
+                );
+                break;
             default:
                 $response = self::sendMessage(
                     telegram: $telegram,
@@ -163,5 +199,20 @@ class TelegramBotApiHelper
             'chatId' => $chatId,
             'incomingText' => $incomingText,
         ];
+    }
+
+    private static function prepareCategoriesForResponse(array $categories): string
+    {
+        $txt = "<u>Список всех категорий</u>:\r\n";
+
+        if (0 === count($categories)){
+            $txt = 'Категории не найдены';
+        }
+
+        foreach ($categories as $category) {
+            $txt .= "    ⚬ {$category['title']}\r\n";
+        }
+
+        return $txt;
     }
 }
