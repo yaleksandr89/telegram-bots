@@ -86,7 +86,7 @@ class TelegramBotApiHelper
                 );
                 break;
             case 'Категории доходов' === $incomingText:
-                $incomeCategories = db()->getCategoriesForType(1);
+                $incomeCategories = db()->getCategoriesForType(2);
 
                 $response = self::sendMessage(
                     telegram: $telegram,
@@ -98,12 +98,32 @@ class TelegramBotApiHelper
                 );
                 break;
             case 'Категории расходов' === $incomingText:
-                $expenseCategories = db()->getCategoriesForType(0);
+                $expenseCategories = db()->getCategoriesForType(1);
 
                 $response = self::sendMessage(
                     telegram: $telegram,
                     chatId: $chatId,
                     message: self::prepareCategoriesForResponse($expenseCategories),
+                    additionalParams: [
+                        'parse_mode' => 'HTML',
+                    ]
+                );
+                break;
+            case 1 === preg_match('/^Доход: ([\d.]+) - ([\w ]+)/iu', $incomingText, $matches):
+                $response = self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: self::setDataFinance($matches, 2),
+                    additionalParams: [
+                        'parse_mode' => 'HTML',
+                    ]
+                );
+                break;
+            case 1 === preg_match('/^Расход: ([\d.]+) - ([\w ]+)/iu', $incomingText, $matches):
+                $response = self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: self::setDataFinance($matches, 1),
                     additionalParams: [
                         'parse_mode' => 'HTML',
                     ]
@@ -205,7 +225,7 @@ class TelegramBotApiHelper
     {
         $txt = "<u>Список всех категорий</u>:\r\n";
 
-        if (0 === count($categories)){
+        if (0 === count($categories)) {
             $txt = 'Категории не найдены';
         }
 
@@ -214,5 +234,26 @@ class TelegramBotApiHelper
         }
 
         return $txt;
+    }
+
+    private static function setDataFinance(array $data, int $typeId): string
+    {
+        if (str_contains($data[1], '.')) {
+            $amount = (float)$data[1];
+        } else {
+            $amount = (int)$data[1];
+        }
+
+        if (db()->isCategory($typeId, $data[2])) {
+            if (db()->setFinance($typeId, $amount, $data[2],)) {
+                $message = 'Запись успешно добавлена';
+            } else {
+                $message = 'При добавление записи произошла ошибка';
+            }
+        } else {
+            $message = 'Категория не найдена';
+        }
+
+        return $message;
     }
 }

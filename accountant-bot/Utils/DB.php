@@ -77,14 +77,14 @@ final class DB
             ->fetchAll();
     }
 
-    public function find(): array
+    public function find(): ?array
     {
         $result = $this
             ->stmt
             ->fetch();
 
         if (!$result) {
-            return [];
+            return null;
         }
 
         return $result;
@@ -97,59 +97,69 @@ final class DB
             ->findAll();
     }
 
-    public function getCategoriesForType(int $type): array
+    public function getCategoriesForType(int $typeId): array
     {
         return $this
             ->query(
-                'SELECT * FROM `telegram_accountant_bot`.finance_cats WHERE type=:type',
+                'SELECT * FROM `telegram_accountant_bot`.finance_cats WHERE type_id = :typeId',
                 [
-                    'type' => $type
+                    'typeId' => $typeId
                 ]
             )
             ->findAll();
     }
 
-//    public function getChatId(int $chatId): ?array
-//    {
-//        return $this
-//            ->query('SELECT * FROM chat WHERE chat_id=:chatId', ['chatId' => $chatId])
-//            ->find();
-//    }
-//    public function setChat(
-//        int $chatId,
-//        string $firstName,
-//        string $lastName,
-//        string $username,
-//        string $date,
-//        string $lang
-//    ): void {
-//        $this
-//            ->query(
-//                'INSERT INTO chat
-//                        (chat_id, first_name, last_name, username, date, lang)
-//                        VALUES (:chatId, :firstName, :lastName, :username, :date, :lang)',
-//                [
-//                    'chatId' => $chatId,
-//                    'firstName' => $firstName,
-//                    'lastName' => $lastName,
-//                    'username' => $username,
-//                    'date' => $date,
-//                    'lang' => $lang
-//                ]
-//            );
-//    }
-//    public function updateChat(int $chatId, string $lang, string $date): void
-//    {
-//        $this
-//            ->query(
-//                'UPDATE chat
-//                       SET lang=:lang, date=:date
-//                       WHERE chat_id=:chatId',
-//                [
-//                    'chatId' => $chatId,
-//                    'lang' => $lang,
-//                    'date' => $date
-//                ]
-//            );
-//    }
+    public function isCategory(int $typeId, string $category): bool
+    {
+        $isCategory = $this
+            ->query(
+                'SELECT * FROM `telegram_accountant_bot`.finance_cats WHERE type_id = :typeId AND title = :title',
+                [
+                    'typeId' => $typeId,
+                    'title' => trim($category)
+                ]
+            )
+            ->find();
+
+        return null !== $isCategory;
+    }
+
+    public function getCategoryByTitle(string $titleCategory): ?array
+    {
+        return $this
+            ->query(
+                'SELECT * FROM `telegram_accountant_bot`.finance_cats WHERE title = :title',
+                [
+                    'title' => trim($titleCategory)
+                ]
+            )
+            ->find();
+    }
+
+    public function setFinance(int $typeId, float|int $amount, string $titleCategory): bool
+    {
+        $category = $this->getCategoryByTitle($titleCategory);
+
+        if (!$category) {
+            return false;
+        }
+
+        $insetItem = $this
+            ->query(
+                'INSERT INTO `telegram_accountant_bot`.`finance`
+                        (amount, category_id, type_id)
+                        VALUES (:amount, :categoryId, :typeId)',
+                [
+                    'amount' => $amount,
+                    'categoryId' => $category['id'],
+                    'typeId' => $typeId,
+                ]
+            );
+
+        if (!$insetItem) {
+            return false;
+        }
+
+        return true;
+    }
 }
