@@ -129,6 +129,44 @@ class TelegramBotApiHelper
                     ]
                 );
                 break;
+            case 'Доходы за сегодня' === $incomingText:
+                $response = self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: self::getFinanceTodayWithCategory(2, 'Доходы за сегодня'),
+                    additionalParams: [
+                        'parse_mode' => 'HTML',
+                    ]
+                );
+                break;
+            case 'Расходы за сегодня' === $incomingText:
+                $response = self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: self::getFinanceTodayWithCategory(1, 'Расходы за сегодня'),
+                    additionalParams: [
+                        'parse_mode' => 'HTML',
+                    ]
+                );
+                break;
+            case 'Итого за сегодня' === $incomingText:
+                $dbIncomesToday = db()->getFinanceInfoForTodayWithoutCategories(2);
+                $incomesToday = (null !== $dbIncomesToday) ? $dbIncomesToday['amount'] : 0;
+
+                $dbExpensesToday = db()->getFinanceInfoForTodayWithoutCategories(1);
+                $expensesToday = (null !== $dbExpensesToday) ? $dbExpensesToday['amount'] : 0;
+
+                $resultToday = $incomesToday - $expensesToday;
+
+                $response = self::sendMessage(
+                    telegram: $telegram,
+                    chatId: $chatId,
+                    message: "<b>Итог за сегодня</b>: $resultToday",
+                    additionalParams: [
+                        'parse_mode' => 'HTML',
+                    ]
+                );
+                break;
             default:
                 $response = self::sendMessage(
                     telegram: $telegram,
@@ -252,6 +290,27 @@ class TelegramBotApiHelper
             }
         } else {
             $message = 'Категория не найдена';
+        }
+
+        return $message;
+    }
+
+    private static function getFinanceTodayWithCategory(int $typeId, string $header): string
+    {
+        $financeTodayWithCategoryData = db()->getFinanceInfoForTodayWithCategories($typeId);
+        $categories = array_column($financeTodayWithCategoryData, 'category');
+        $amounts = array_column($financeTodayWithCategoryData, 'amount');
+
+        $result = array_combine($categories, $amounts);
+
+        $message = "<u>$header</u>\r\n";
+        $total = 0;
+        foreach ($result as $categoryName => $amountByCategory) {
+            $message .= "    * $categoryName - $amountByCategory\r\n";
+            $total += $amountByCategory;
+        }
+        if (0 !== $total) {
+            $message .= "\r\n<b>Всего: $total</b>";
         }
 
         return $message;
