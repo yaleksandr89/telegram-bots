@@ -12,7 +12,7 @@ require_once 'vendor/autoload.php';
  */
 const BASE_URL = 'https://api.telegram.org/bot';
 
-const FROM_ID = ______; // ID вашего аккаунта, можно посмотреть в массиве ['from']['id']
+const TELEGRAM_USER_ID = ______; // ID вашего аккаунта, можно посмотреть в массиве ['from']['id']
 
 /**
  * Логин: ...

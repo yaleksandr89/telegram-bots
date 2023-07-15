@@ -29,7 +29,7 @@ class TelegramBotApiHelper
             'incomingText' => $incomingText,
         ] = self::getDataForWork($update, $nameArrMessage);
 
-        if (FROM_ID !== $typeMessage['from']['id']) {
+        if (TELEGRAM_USER_ID !== $typeMessage['from']['id']) {
             return self::sendMessage(
                 telegram: $telegram,
                 chatId: $chatId,
