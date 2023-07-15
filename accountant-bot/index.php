@@ -6,17 +6,37 @@ if (file_exists('../config.php')) {
     die('Please, created config file.');
 }
 
+use AccountantBot\Utils\DB;
+use AccountantBot\Utils\TelegramBotApiHelper as Helper;
 use Telegram\Bot\Api as TelegramBotApi;
-use YaTranslationBot\DB;
-use YaTranslationBot\Utils\TelegramBotApiHelper as Helper;
 
 try {
-    function db(): DB
+    function getNameMonthByNumber(int $numberMonth): string
     {
-        return DB::getInstance()->getConnection(PARAMS_DB_TRANSLATION);
+        $months = [
+            'январь',
+            'февраль',
+            'март',
+            'апрель',
+            'май',
+            'июнь',
+            'июль',
+            'август',
+            'сентябрь',
+            'октябрь',
+            'ноябрь',
+            'декабрь'
+        ];
+
+        return $months[$numberMonth - 1];
     }
 
-    $telegram = new TelegramBotApi(YA_TRANSLATION_BOT);
+    function db(): DB
+    {
+        return DB::getInstance()->getConnection(PARAMS_DB_ACCOUNTANT);
+    }
+
+    $telegram = new TelegramBotApi(YA_ACCOUNTANT_BOT);
 
     // >>> getUpdates
     $update = $telegram->getWebhookUpdate();
@@ -36,4 +56,4 @@ try {
     file_put_contents(__DIR__ . '/try_catch_logs.txt', date('d.m.Y H:i:s') . PHP_EOL . print_r($e, true), FILE_APPEND);
 }
 
-//die('Silence is golden');
+die('Silence is golden');
