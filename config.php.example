@@ -36,16 +36,28 @@ const EXAMPLE_TOKEN = '...'; // Токен (создается в BotFather)
 
 
 // Для подключения к БД (используется в некоторых ботах, например бот переводчик)
+// MYSQL
 const PARAMS_DB = [
     'type' => 'mysql',
     'host' => 'localhost',
     'name' => '{DB_NAME}',
-    'port' => '{DB_PORT}',
+    'port' => '3306', // 3306 - порт по умолчанию
     'user' => '{DB_USER}',
     'password' => '{DB_PASSWORD}',
     'options' => [
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        //PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION // формирование исключений для PHP < v.8
+    ],
+];
+// Postgresql
+const PARAMS_DB = [
+    'type' => 'pgsql',
+    'host' => 'localhost',
+    'name' => '{DB_NAME}',
+    'port' => '5432', // 5432 - порт по умолчанию
+    'user' => '{DB_USER}',
+    'password' => '{DB_PASSWORD}',
+    'options' => [
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ],
 ];
 

@@ -93,7 +93,7 @@ final class DB
     public function getAllCategories(): array
     {
         return $this
-            ->query('SELECT * FROM `telegram_accountant_bot`.finance_cats')
+            ->query('SELECT * FROM finance_cats')
             ->findAll();
     }
 
@@ -101,7 +101,7 @@ final class DB
     {
         return $this
             ->query(
-                'SELECT * FROM `telegram_accountant_bot`.finance_cats WHERE type_id = :typeId',
+                'SELECT * FROM finance_cats WHERE type_id = :typeId',
                 [
                     'typeId' => $typeId
                 ]
@@ -113,7 +113,7 @@ final class DB
     {
         $isCategory = $this
             ->query(
-                'SELECT * FROM `telegram_accountant_bot`.finance_cats WHERE type_id = :typeId AND title = :title',
+                'SELECT * FROM finance_cats WHERE type_id = :typeId AND title = :title',
                 [
                     'typeId' => $typeId,
                     'title' => trim($category)
@@ -128,7 +128,7 @@ final class DB
     {
         return $this
             ->query(
-                'SELECT * FROM `telegram_accountant_bot`.finance_cats WHERE title = :title',
+                'SELECT * FROM finance_cats WHERE title = :title',
                 [
                     'title' => trim($titleCategory)
                 ]
@@ -146,7 +146,7 @@ final class DB
 
         $insetItem = $this
             ->query(
-                'INSERT INTO `telegram_accountant_bot`.`finance`
+                'INSERT INTO finance
                         (amount, category_id, type_id)
                         VALUES (:amount, :categoryId, :typeId)',
                 [
@@ -167,8 +167,8 @@ final class DB
     {
         $sql = <<< SQL
                 SELECT SUM(amount) AS amount
-                FROM `telegram_accountant_bot`.`finance`
-                WHERE type_id=:typeId AND DATE(created_at)=CURRENT_DATE()
+                FROM finance
+                WHERE type_id=:typeId AND DATE(created_at)=CURRENT_DATE
                 SQL;
 
         return $this
@@ -183,9 +183,9 @@ final class DB
     {
         $sql = <<< SQL
                 SELECT fc.title AS category, SUM(f.amount) AS amount
-                FROM `telegram_accountant_bot`.`finance` AS f
-                LEFT JOIN `telegram_accountant_bot`.`finance_cats` AS fc ON f.category_id = fc.id
-                WHERE f.type_id = :typeId AND DATE(f.created_at) = CURRENT_DATE()
+                FROM finance AS f
+                LEFT JOIN finance_cats AS fc ON f.category_id = fc.id
+                WHERE f.type_id = :typeId AND DATE(f.created_at) = CURRENT_DATE
                 GROUP BY category;
                 SQL;
 
@@ -201,8 +201,10 @@ final class DB
     {
         $sql = <<< SQL
                 SELECT SUM(amount) AS amount
-                FROM `telegram_accountant_bot`.`finance`
-                WHERE type_id = :typeId AND (YEAR(created_at) = YEAR(CURRENT_DATE) AND MONTH(created_at) = MONTH(CURRENT_DATE));
+                FROM finance
+                WHERE type_id = :typeId 
+                  AND EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM CURRENT_DATE)
+                  AND EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE);
                 SQL;
 
         return $this
@@ -217,9 +219,11 @@ final class DB
     {
         $sql = <<< SQL
                 SELECT fc.title AS category, SUM(f.amount) AS amount
-                FROM `telegram_accountant_bot`.`finance` AS f
-                LEFT JOIN `telegram_accountant_bot`.`finance_cats` AS fc ON f.category_id = fc.id
-                WHERE f.type_id = :typeId AND (YEAR(created_at) = YEAR(CURRENT_DATE) AND MONTH(created_at) = MONTH(CURRENT_DATE))
+                FROM finance AS f
+                LEFT JOIN finance_cats AS fc ON f.category_id = fc.id
+                WHERE f.type_id = :typeId 
+                  AND EXTRACT(YEAR FROM f.created_at) = EXTRACT(YEAR FROM CURRENT_DATE)
+                  AND EXTRACT(MONTH FROM f.created_at) = EXTRACT(MONTH FROM CURRENT_DATE)
                 GROUP BY category;
                 SQL;
 
